@@ -2,7 +2,7 @@
 import { readFileSync } from 'node:fs';
 import { describe, it, beforeAll, afterAll } from 'vitest';
 import { initializeTestEnvironment, assertFails, assertSucceeds } from '@firebase/rules-unit-testing';
-import { ref, uploadBytes, getBytes, deleteObject } from 'firebase/storage';
+import { ref, uploadBytes, getBytes, deleteObject, listAll } from 'firebase/storage';
 import { doc, setDoc } from 'firebase/firestore';
 
 let env;
@@ -52,6 +52,12 @@ describe('이미지 읽기·삭제', () => {
       await setDoc(doc(ctx.firestore(), 'quizzes', QUIZ), { isPublic: true, ownerUid: 'alice' });
     });
     await assertSucceeds(getBytes(ref(st(null), path('alice'))));
+  });
+  it('폴더 목록 조회(퀴즈 삭제 시 이미지 정리용)는 소유자만', async () => {
+    const folder = `quiz-images/alice/${QUIZ}`;
+    await assertSucceeds(listAll(ref(st('alice'), folder)));
+    await assertFails(listAll(ref(st('bob'), folder)));
+    await assertFails(listAll(ref(st(null), folder)));
   });
   it('삭제는 소유자만', async () => {
     await assertFails(deleteObject(ref(st('bob'), path('alice'))));

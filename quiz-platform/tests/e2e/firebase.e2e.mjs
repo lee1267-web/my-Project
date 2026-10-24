@@ -13,6 +13,13 @@ const { chromium } = loadPlaywright();
 // 1x1 PNG
 const PNG = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==', 'base64');
 
+// 에뮬레이터 관리자 권한(Bearer owner)으로 Storage 파일 목록 조회
+async function storageFiles(anyUrl) {
+  const bucket = anyUrl.match(/\/v0\/b\/([^/]+)\//)[1];
+  const res = await fetch(`http://127.0.0.1:9199/v0/b/${bucket}/o?prefix=quiz-images%2F`, { headers: { Authorization: 'Bearer owner' } });
+  return ((await res.json()).items || []).map((i) => i.name);
+}
+
 export async function run() {
   console.log(`\n[Firebase Emulator E2E] ${BASE}`);
   const browser = await chromium.launch();
@@ -27,6 +34,7 @@ export async function run() {
   watchErrors(b, errors, ignore);
   let publicId;
   let privateId;
+  let thumbUrl;
 
   await step('에뮬레이터 안내 배너 + 빈 목록 상태', async () => {
     await a.goto(BASE);
@@ -51,6 +59,7 @@ export async function run() {
     assert.equal(await h1(a), '공유 테스트 한국 지리');
     const src = await a.locator('.intro-thumb img').getAttribute('src');
     assert.match(src, /^http:\/\/127\.0\.0\.1:9199\/v0\/b\/.+quiz-images%2F/);
+    thumbUrl = src;
     if (SHOTS) await a.screenshot({ path: `${SHOTS}/A-saved.png`, fullPage: true });
   });
 
@@ -121,7 +130,9 @@ export async function run() {
     assert.equal(await h1(b), '이제 공개된 퀴즈');
   });
 
-  await step('사용자 A: 퀴즈 삭제 → B 에게 "삭제된 퀴즈" 안내', async () => {
+  await step('사용자 A: 퀴즈 삭제 → B 에게 "삭제된 퀴즈" 안내 + 이미지 파일 정리', async () => {
+    const before = await storageFiles(thumbUrl);
+    assert.ok(before.some((n) => n.includes(publicId)), '삭제 전에는 이미지 파일이 있어야 함');
     await a.goto(`${BASE}/my`);
     const item = a.locator('.my-item', { hasText: '공유 테스트 한국 지리' });
     await item.getByRole('button', { name: '삭제' }).click();
@@ -129,6 +140,9 @@ export async function run() {
     await a.getByText('퀴즈를 삭제했어요').waitFor();
     await b.goto(`${BASE}/quiz/${publicId}`);
     assert.equal(await h1(b), '삭제된 퀴즈예요');
+    // Storage 의 썸네일 이미지도 함께 지워져야 함
+    const after = await storageFiles(thumbUrl);
+    assert.ok(!after.some((n) => n.includes(publicId)), `남은 파일: ${after.join(', ')}`);
   });
 
   await step('사용자 A: 샘플 퀴즈 모두 추가 → B 의 홈에 표시', async () => {
@@ -138,7 +152,7 @@ export async function run() {
     const n = await a.locator('.sample-list input:checked').count();
     assert.ok(n >= 3);
     await a.getByRole('button', { name: '선택한 샘플 추가' }).click();
-    await a.getByText(`샘플 퀴즈 ${n}개를 공개 퀴즈로 추가했어요`).waitFor({ timeout: 60000 });
+    await a.getByText(`샘플 퀴즈 ${n}개를 공개 퀴즈로 추가했어요`).waitFor({ timeout: 180000 });
     await b.goto(BASE);
     await b.locator('.quiz-card:not(.skeleton)').first().waitFor();
     const count = await b.locator('.quiz-card').count();

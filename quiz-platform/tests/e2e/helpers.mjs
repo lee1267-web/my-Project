@@ -97,7 +97,9 @@ export async function answerCurrent(page, answer) {
   if (answer === null) {
     await form.getByRole('button', { name: '건너뛰기' }).click();
   } else if (await form.locator('.choices').count()) {
-    await form.locator('label.choice', { hasText: answer }).first().click();
+    // 보기 문장이 정확히 같은 것만 클릭 (예: "0도"를 고를 때 "-10도"를 누르지 않도록)
+    const exact = new RegExp(`^${answer.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`);
+    await form.locator('label.choice').filter({ has: page.locator('.choice-text', { hasText: exact }) }).click();
     await form.getByRole('button', { name: '정답 확인' }).click();
   } else {
     await form.locator('input.input').fill(answer);
