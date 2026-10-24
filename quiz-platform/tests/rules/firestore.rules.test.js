@@ -103,6 +103,8 @@ describe('생성', () => {
     await assertFails(setDoc(doc(alice(), 'quizzes', ID), quizData('alice', { imageUrl: 'https://evil.example/track.png' })));
     await assertFails(setDoc(doc(alice(), 'quizzes', ID), quizData('alice', { imageUrl: 'http://localhost:8080/admin' })));
     await assertFails(setDoc(doc(alice(), 'quizzes', ID), quizData('alice', { imageUrl: mine.replace('Falice', 'Fbob') })));
+    // 같은 사람이라도 다른 퀴즈 폴더의 이미지는 거부 (그 퀴즈를 지우면 이미지가 사라지므로)
+    await assertFails(setDoc(doc(alice(), 'quizzes', ID), quizData('alice', { imageUrl: mine.replace(ID, ID2) })));
     await assertFails(setDoc(doc(alice(), 'quizzes', ID), quizData('alice', { imageUrl: `${mine}&x=https://evil.example` })));
     await assertFails(setDoc(doc(alice(), 'quizzes', ID), quizData('alice', { imageUrl: mine.replace('https://firebasestorage.googleapis.com', 'https://firebasestorage.googleapis.com.evil.example') })));
     await assertSucceeds(setDoc(doc(alice(), 'quizzes', ID), quizData('alice', { imageUrl: mine })));

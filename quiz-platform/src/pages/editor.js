@@ -1,8 +1,8 @@
 // 퀴즈 만들기(/create) 와 수정하기(/edit/:id) 화면
 import { h, clear, setTitle } from '../utils/dom.js';
-import { CATEGORIES, CATEGORY_KEYS, LIMITS, QUESTION_TYPES, IMAGE_TYPES, getCategory, getSubcategory } from '../utils/constants.js';
+import { CATEGORIES, CATEGORY_KEYS, LIMITS, QUESTION_TYPES, IMAGE_TYPES, getCategory, getSubcategory, categoryLabel } from '../utils/constants.js';
 import { validateQuiz, validateImageFile, parseAltAnswers, parseTags } from '../utils/validation.js';
-import { getQuiz, saveQuiz } from '../services/quizService.js';
+import { getQuiz, saveQuiz, newQuizId } from '../services/quizService.js';
 import { ensureSignedIn } from '../services/auth.js';
 import { isImageUploadEnabled } from '../services/storageService.js';
 import { IS_DEMO } from '../services/config.js';
@@ -129,6 +129,7 @@ export async function render(container, ctx) {
   }
   let dirty = false;
   let saving = false;
+  let pendingQuizId = null;
   const imagesEnabled = isImageUploadEnabled();
   const objectUrls = new Set();
   const markDirty = () => { dirty = true; };
@@ -483,7 +484,7 @@ export async function render(container, ctx) {
     const dialog = h('dialog', { class: 'dialog dialog-wide', 'aria-labelledby': 'preview-title' },
       h('p', { class: 'eyebrow' }, '미리보기 · 정답이 표시됩니다'),
       h('h2', { id: 'preview-title', class: 'dialog-title' }, data.title.trim() || '(제목 없음)'),
-      h('p', { class: 'muted' }, `${cat ? `${cat.emoji} ${cat.label}` : '카테고리 미선택'}${getSubcategory(data.category, data.subcategory) ? ` > ${getSubcategory(data.category, data.subcategory).label}` : ''} · 문제 ${data.questions.length}개 · ${data.isPublic ? '공개' : '비공개'}`),
+      h('p', { class: 'muted' }, `${cat ? categoryLabel(data.category, data.subcategory, { sep: ' > ' }) : '카테고리 미선택'} · 문제 ${data.questions.length}개 · ${data.isPublic ? '공개' : '비공개'}`),
       data.tags.length ? h('p', { class: 'tag-list' }, data.tags.map((t) => h('span', { class: 'tag' }, `#${t}`))) : null,
       data.description.trim() ? h('p', { class: 'preview-desc' }, data.description) : null,
       h('ol', { class: 'preview-list' },
@@ -528,7 +529,9 @@ export async function render(container, ctx) {
     saveBtn.setAttribute('aria-busy', 'true');
     const label = saveBtn.textContent;
     try {
-      const id = await saveQuiz(data, existing, (msg) => { saveBtn.textContent = msg; });
+      // 새 퀴즈는 ID 를 한 번만 받아 두고, 저장을 다시 시도해도 같은 ID 를 씁니다.
+      if (!existing && !pendingQuizId) pendingQuizId = await newQuizId();
+      const id = await saveQuiz(data, existing, (msg) => { saveBtn.textContent = msg; }, { quizId: pendingQuizId });
       removeDraft(draftKey);
       dirty = false;
       showToast(editId ? '수정 내용을 저장했어요.' : '퀴즈를 저장했어요!', 'success');

@@ -48,19 +48,6 @@ export async function uploadQuizImage(file, { uid, quizId }) {
   }
 }
 
-// 더 이상 쓰지 않는 이미지 삭제 (실패해도 퀴즈 저장에는 영향 없음)
-export async function deleteImageUrls(urls) {
-  if (IS_DEMO || !STORAGE_ENABLED) return;
-  const targets = urls.filter((u) => u && u.includes('/o/quiz-images%2F'));
-  if (!targets.length) return;
-  try {
-    const { storage, mod } = await getFirebaseStorage();
-    await Promise.allSettled(targets.map((u) => mod.deleteObject(mod.ref(storage, u))));
-  } catch (e) {
-    console.warn('이미지 삭제 실패', e);
-  }
-}
-
 export async function deleteQuizFolder(uid, quizId) {
   if (IS_DEMO || !STORAGE_ENABLED) return;
   try {
@@ -69,5 +56,29 @@ export async function deleteQuizFolder(uid, quizId) {
     await Promise.allSettled(res.items.map((item) => mod.deleteObject(item)));
   } catch (e) {
     console.warn('이미지 폴더 삭제 실패', e);
+  }
+}
+
+// 다운로드 주소 → Storage 경로 (예: .../o/quiz-images%2Fuid%2Fqid%2Fa.png?alt=... → quiz-images/uid/qid/a.png)
+export function storagePathFromUrl(url) {
+  const m = /\/o\/([^?]+)/.exec(String(url || ''));
+  if (!m) return '';
+  try {
+    return decodeURIComponent(m[1]);
+  } catch {
+    return '';
+  }
+}
+
+// 퀴즈 폴더에서 usedUrls 에 없는 파일을 지웁니다. (실패해도 저장에는 영향 없음)
+export async function cleanupQuizFolder(uid, quizId, usedUrls) {
+  if (IS_DEMO || !STORAGE_ENABLED) return;
+  const used = new Set(usedUrls.map(storagePathFromUrl).filter(Boolean));
+  try {
+    const { storage, mod } = await getFirebaseStorage();
+    const res = await mod.listAll(mod.ref(storage, `quiz-images/${uid}/${quizId}`));
+    await Promise.allSettled(res.items.filter((item) => !used.has(item.fullPath)).map((item) => mod.deleteObject(item)));
+  } catch (e) {
+    console.warn('이미지 정리 실패', e);
   }
 }

@@ -4,7 +4,8 @@ import { IS_DEMO } from './config.js';
 import { ensureSignedIn, getCurrentUid } from './auth.js';
 import { createDemoRepo } from './demoRepo.js';
 import { toEditableFields } from './quizModel.js';
-import { uploadQuizImage, deleteImageUrls, deleteQuizFolder } from './storageService.js';
+import { uploadQuizImage, cleanupQuizFolder, deleteQuizFolder } from './storageService.js';
+import { collectPages } from '../utils/paging.js';
 import { AppError } from '../utils/errors.js';
 import { QUIZ_ID_PATTERN, getSubcategory } from '../utils/constants.js';
 import { parseSearchTerm, matchesSearch, subToken } from '../utils/search.js';
@@ -54,9 +55,12 @@ export async function listPublicQuizzes({ category = '', subcategory = '', searc
   const parsed = parseSearchTerm(search);
   const useSub = Boolean(category && getSubcategory(category, subcategory));
   const token = useSub ? subToken(subcategory) : parsed?.primary;
-  const res = await (await getRepo()).listPublicQuizzes({ category, token, sort, cursor });
-  const words = useSub && parsed ? { primary: parsed.primary, rest: parsed.rest } : parsed;
-  return { ...res, items: res.items.filter((q) => matchesSearch(q, words)) };
+  const repo = await getRepo();
+  return collectPages(
+    (c) => repo.listPublicQuizzes({ category, token, sort, cursor: c }),
+    (q) => matchesSearch(q, parsed),
+    { cursor },
+  );
 }
 
 export async function listMyQuizzes() {
@@ -64,30 +68,58 @@ export async function listMyQuizzes() {
   return { uid, items: await (await getRepo()).listMyQuizzes(uid) };
 }
 
+// 새 퀴즈의 ID. 편집 화면이 한 번 받아 두고 저장을 다시 시도할 때도 같은 ID를 씁니다.
+// (같은 ID 폴더에 이미지가 올라가야 다시 올리지 않고, 남은 파일도 정리할 수 있음)
+export async function newQuizId() {
+  return (await getRepo()).newQuizId();
+}
+
+// 이미 올린 파일 기억: 저장이 실패한 뒤 다시 저장할 때 같은 파일을 또 올리지 않도록
+const uploaded = new WeakMap(); // File → { quizId, url }
+
+// 동시에 n 개씩 실행
+async function runPool(tasks, n) {
+  const results = new Array(tasks.length);
+  let i = 0;
+  const worker = async () => {
+    while (i < tasks.length) {
+      const k = i++;
+      results[k] = await tasks[k]();
+    }
+  };
+  await Promise.all(Array.from({ length: Math.min(n, tasks.length) }, worker));
+  return results;
+}
+
 // form: 편집 화면의 상태. 새 이미지 파일은 form.thumbFile / question.imageFile 에 들어 있습니다.
-// existing: 수정 중이면 원래 퀴즈
-export async function saveQuiz(form, existing = null, onProgress = () => {}) {
+// existing: 수정 중이면 원래 퀴즈 / options.quizId: 새 퀴즈일 때 미리 받아 둔 ID
+export async function saveQuiz(form, existing = null, onProgress = () => {}, options = {}) {
   const { valid } = validateQuiz(form);
   if (!valid) throw new AppError('unknown', '입력 내용을 다시 확인해 주세요.');
   const repo = await getRepo();
   const uid = await ensureSignedIn();
   if (existing && existing.ownerUid !== uid) throw new AppError('forbidden', '본인이 만든 퀴즈만 수정할 수 있습니다.');
-  const quizId = existing ? existing.id : repo.newQuizId();
+  const quizId = existing ? existing.id : options.quizId || repo.newQuizId();
 
-  // 1) 새로 선택한 이미지 업로드
-  const files = [form.thumbFile, ...form.questions.map((q) => q.imageFile)].filter(Boolean);
-  let done = 0;
-  const upload = async (file) => {
-    onProgress(`이미지 업로드 중... (${done + 1}/${files.length})`);
-    const url = await uploadQuizImage(file, { uid, quizId });
-    done++;
-    return url;
-  };
+  // 1) 새로 선택한 이미지 업로드 (4개씩 동시에, 이미 올린 파일은 건너뜀)
   const data = { ...form, questions: form.questions.map((q) => ({ ...q })) };
-  if (form.thumbFile) data.imageUrl = await upload(form.thumbFile);
-  for (const q of data.questions) {
-    if (q.imageFile) q.imageUrl = await upload(q.imageFile);
-  }
+  const targets = [];
+  if (form.thumbFile) targets.push({ file: form.thumbFile, set: (url) => { data.imageUrl = url; } });
+  data.questions.forEach((q) => {
+    if (q.imageFile) targets.push({ file: q.imageFile, set: (url) => { q.imageUrl = url; } });
+  });
+  let done = 0;
+  await runPool(targets.map((t) => async () => {
+    const cached = uploaded.get(t.file);
+    let url = cached && cached.quizId === quizId ? cached.url : null;
+    if (!url) {
+      url = await uploadQuizImage(t.file, { uid, quizId });
+      uploaded.set(t.file, { quizId, url });
+    }
+    t.set(url);
+    done++;
+    onProgress(`이미지 업로드 중... (${done}/${targets.length})`);
+  }), 4);
 
   // 2) DB 저장
   onProgress('저장 중...');
@@ -95,12 +127,9 @@ export async function saveQuiz(form, existing = null, onProgress = () => {}) {
   if (existing) await repo.updateQuiz(quizId, fields, uid);
   else await repo.createQuiz(quizId, fields, uid);
 
-  // 3) 수정으로 빠진 옛 이미지 정리
-  if (existing) {
-    const used = new Set([fields.imageUrl, ...fields.questions.map((q) => q.imageUrl)]);
-    const old = [existing.imageUrl, ...existing.questions.map((q) => q.imageUrl)];
-    await deleteImageUrls(old.filter((u) => u && !used.has(u)));
-  }
+  // 3) 이 퀴즈 폴더에서 지금 쓰지 않는 이미지 정리
+  //    (수정으로 빠진 이미지, 실패했던 저장 시도에서 올라간 파일, 다른 탭에서 올린 뒤 덮어쓴 파일)
+  await cleanupQuizFolder(uid, quizId, [fields.imageUrl, ...fields.questions.map((q) => q.imageUrl)]);
   return quizId;
 }
 

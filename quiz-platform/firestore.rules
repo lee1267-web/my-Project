@@ -33,9 +33,10 @@ service cloud.firestore {
     // 썸네일은 "비어 있음" 또는 "본인 업로드 폴더의 Firebase Storage 다운로드 주소"만 허용
     // → 외부 추적 서버·localhost 주소 등으로 방문자 정보를 빼내는 것을 막습니다.
     // (127.0.0.1:9199 는 로컬 Storage Emulator 주소. 실서비스에서는 의미 없는 주소라 허용해도 무해)
-    function validImageUrl(u) {
+    // quizId: 저장하려는 퀴즈의 ID. 다른 퀴즈 폴더의 이미지를 가리킬 수 없게 합니다.
+    function validImageUrl(u, quizId) {
       let path = '/v0/b/[a-z0-9._-]+/o/quiz-images%2F' + request.auth.uid
-        + '%2F[A-Za-z0-9]{20}%2F[A-Za-z0-9]{12}\\.(jpg|png|webp|gif)\\?alt=media&token=[A-Za-z0-9-]+';
+        + '%2F' + quizId + '%2F[A-Za-z0-9]{12}\\.(jpg|png|webp|gif)\\?alt=media&token=[A-Za-z0-9-]+';
       return u is string && u.size() <= 2000
         && (u == ''
           || u.matches('https://firebasestorage\\.googleapis\\.com' + path)
@@ -43,11 +44,11 @@ service cloud.firestore {
     }
 
     // 소유자가 쓸 수 있는 내용 필드 검증
-    function validContent(d) {
+    function validContent(d, quizId) {
       return d.title is string && d.title.trim().size() >= 1 && d.title.size() <= 100
         && d.description is string && d.description.size() <= 500
         && d.category is string && validCategory(d.category)
-        && validImageUrl(d.imageUrl)
+        && validImageUrl(d.imageUrl, quizId)
         && d.isPublic is bool
         && d.questions is list && d.questions.size() >= 1 && d.questions.size() <= 100
         && d.questionCount is int && d.questionCount == d.questions.size()
@@ -60,7 +61,7 @@ service cloud.firestore {
         && d.questions[0].question is string && d.questions[0].question.size() >= 1
         && d.questions[0].answer is string && d.questions[0].answer.size() >= 1
         && d.questions[0].type in ['text', 'choice']
-        && (!('imageUrl' in d.questions[0]) || validImageUrl(d.questions[0].imageUrl));
+        && (!('imageUrl' in d.questions[0]) || validImageUrl(d.questions[0].imageUrl, quizId));
     }
 
     function allowedKeys() {
@@ -85,7 +86,7 @@ service cloud.firestore {
         && request.resource.data.createdAt == request.time
         && request.resource.data.updatedAt == request.time
         && quizId.size() == 20
-        && validContent(request.resource.data);
+        && validContent(request.resource.data, quizId);
 
       // 소유자 수정: ownerUid/status/playCount/createdAt 는 바꿀 수 없음
       allow update: if (isOwner(resource.data)
@@ -93,7 +94,7 @@ service cloud.firestore {
           && !request.resource.data.diff(resource.data).affectedKeys()
                .hasAny(['ownerUid', 'status', 'playCount', 'createdAt'])
           && request.resource.data.updatedAt == request.time
-          && validContent(request.resource.data))
+          && validContent(request.resource.data, quizId))
         // 플레이 수 +1 (공개 퀴즈, 로그인(익명 포함) 사용자 누구나)
         || (signedIn()
           && isVisible(resource.data)

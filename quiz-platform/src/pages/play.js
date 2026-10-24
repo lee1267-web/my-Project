@@ -1,7 +1,7 @@
 // 퀴즈 풀기 화면 (/quiz/:id) — 공유 링크로 들어오는 곳입니다.
 // 주소의 ID 로 DB 에서 퀴즈를 직접 조회하므로, 다른 브라우저·기기에서도 같은 퀴즈가 열립니다.
 import { h, clear, setTitle, formatDate, appendChildren } from '../utils/dom.js';
-import { getCategory, getSubcategory } from '../utils/constants.js';
+import { categoryLabel } from '../utils/constants.js';
 import { getPlayableQuiz, recordPlay } from '../services/quizService.js';
 import { getCurrentUid } from '../services/auth.js';
 import { isCorrect, SKIPPED } from '../utils/grading.js';
@@ -45,13 +45,12 @@ export async function render(container, ctx) {
 
   function renderIntro() {
     clear(root);
-    const cat = getCategory(quiz.category);
-    appendChildren(root, [
+      appendChildren(root, [
       h('article', { class: 'card intro-card' },
         thumbnail(quiz, 'intro-thumb'),
         h('div', { class: 'intro-body' },
           h('div', { class: 'badges' },
-            h('span', { class: 'badge badge-category' }, `${cat.emoji} ${cat.label}${getSubcategory(quiz.category, quiz.subcategory) ? ` · ${getSubcategory(quiz.category, quiz.subcategory).label}` : ''}`),
+            h('span', { class: 'badge badge-category' }, categoryLabel(quiz.category, quiz.subcategory)),
             quiz.isPublic ? null : h('span', { class: 'badge badge-private' }, '🔒 비공개'),
             isOwner ? h('span', { class: 'badge badge-owner' }, '내 퀴즈') : null,
           ),

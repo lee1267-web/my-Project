@@ -130,6 +130,21 @@ export async function run() {
     assert.equal(await h1(b), '이제 공개된 퀴즈');
   });
 
+  await step('사용자 A: 썸네일을 바꿔 저장하면 옛 이미지는 지워지고 새 파일 1개만 남음', async () => {
+    await a.goto(`${BASE}/edit/${publicId}`);
+    await a.getByLabel('퀴즈 제목').waitFor();
+    const file = '/tmp/claude-e2e-thumb2.png';
+    writeFileSync(file, PNG);
+    await a.locator('#f-thumb').setInputFiles(file);
+    await a.locator('button[type="submit"][form="quiz-form"]').click();
+    await a.waitForURL(new RegExp(`/quiz/${publicId}$`));
+    const src = await a.locator('.intro-thumb img').getAttribute('src');
+    assert.notEqual(src, thumbUrl, '새 썸네일 주소여야 함');
+    const files = (await storageFiles(src)).filter((n) => n.includes(publicId));
+    assert.equal(files.length, 1, `남은 파일: ${files.join(', ')}`);
+    thumbUrl = src;
+  });
+
   await step('사용자 A: 퀴즈 삭제 → B 에게 "삭제된 퀴즈" 안내 + 이미지 파일 정리', async () => {
     const before = await storageFiles(thumbUrl);
     assert.ok(before.some((n) => n.includes(publicId)), '삭제 전에는 이미지 파일이 있어야 함');

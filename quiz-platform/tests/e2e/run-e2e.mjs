@@ -9,15 +9,15 @@ const target = process.argv[2] || 'demo';
 const SHOT_DIR = 'tests/e2e/screenshots';
 mkdirSync(SHOT_DIR, { recursive: true });
 
-async function withServer(mode, port, extraEnv, fn) {
-  const server = spawn('npx', ['vite', '--mode', mode, '--port', String(port), '--strictPort', '--host', '127.0.0.1'], {
+async function withServer(mode, port, extraEnv, fn, host = '127.0.0.1') {
+  const server = spawn('npx', ['vite', '--mode', mode, '--port', String(port), '--strictPort', '--host', host], {
     env: { ...process.env, ...extraEnv },
     stdio: ['ignore', 'pipe', 'pipe'],
   });
   let log = '';
   server.stdout.on('data', (d) => { log += d; });
   server.stderr.on('data', (d) => { log += d; });
-  const base = `http://127.0.0.1:${port}`;
+  const base = `http://${host}:${port}`;
   for (let i = 0; i < 60; i++) {
     try {
       if ((await fetch(base)).ok) break;
@@ -47,7 +47,8 @@ if (target === 'hosting') {
   if (res.status !== 200 || !csp.includes("frame-ancestors 'none'")) failed++;
   failed += await (await import('./demo.e2e.mjs')).run();
 } else if (target === 'emulator') {
-  failed += await withServer('emulator', 5181, {}, async () => (await import('./firebase.e2e.mjs')).run());
+  // 실제 개발 환경처럼 localhost 로 접속 (에뮬레이터 주소 불일치 같은 문제를 잡기 위해)
+  failed += await withServer('emulator', 5181, {}, async () => (await import('./firebase.e2e.mjs')).run(), 'localhost');
 } else {
   failed += await withServer('demo', 5180, {}, async () => {
     let f = await (await import('./demo.e2e.mjs')).run();

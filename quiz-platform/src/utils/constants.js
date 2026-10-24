@@ -97,6 +97,13 @@ export function getSubcategory(categoryKey, subKey) {
   return CATEGORIES.find((c) => c.key === categoryKey)?.subs.find((x) => x.key === subKey) || null;
 }
 
+// "🎵 음악 · 발라드" 처럼 배지에 쓰는 이름 (withEmoji=false 면 이모지 없이)
+export function categoryLabel(categoryKey, subKey, { withEmoji = true, sep = ' · ' } = {}) {
+  const cat = getCategory(categoryKey);
+  const sub = getSubcategory(categoryKey, subKey);
+  return `${withEmoji ? `${cat.emoji} ` : ''}${cat.label}${sub ? `${sep}${sub.label}` : ''}`;
+}
+
 export function getCategory(key) {
   return CATEGORIES.find((c) => c.key === key) || CATEGORIES[CATEGORIES.length - 1];
 }
