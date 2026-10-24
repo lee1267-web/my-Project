@@ -1,6 +1,6 @@
 // 퀴즈 풀기 화면 (/quiz/:id) — 공유 링크로 들어오는 곳입니다.
 // 주소의 ID 로 DB 에서 퀴즈를 직접 조회하므로, 다른 브라우저·기기에서도 같은 퀴즈가 열립니다.
-import { h, clear, setTitle, formatDate } from '../utils/dom.js';
+import { h, clear, setTitle, formatDate, appendChildren } from '../utils/dom.js';
 import { getCategory, getSubcategory } from '../utils/constants.js';
 import { getPlayableQuiz, recordPlay } from '../services/quizService.js';
 import { getCurrentUid } from '../services/auth.js';
@@ -46,7 +46,7 @@ export async function render(container, ctx) {
   function renderIntro() {
     clear(root);
     const cat = getCategory(quiz.category);
-    root.append(
+    appendChildren(root, [
       h('article', { class: 'card intro-card' },
         thumbnail(quiz, 'intro-thumb'),
         h('div', { class: 'intro-body' },
@@ -79,7 +79,7 @@ export async function render(container, ctx) {
         ? h('div', { class: 'notice notice-success', role: 'status' }, '✅ 저장 완료! 아래 링크를 복사해서 친구에게 보내 보세요.')
         : null,
       shareBox(quiz),
-    );
+    ]);
     if (ctx.query.saved === '1') history.replaceState(null, '', `/quiz/${id}`);
   }
 
@@ -208,8 +208,9 @@ export async function render(container, ctx) {
 function showFeedback(el, q, answer) {
   const ok = isCorrect(q, answer);
   el.className = `feedback ${ok ? 'feedback-ok' : 'feedback-bad'}`;
-  clear(el).append(
+  // appendChildren 은 null 을 건너뜁니다. (기본 append 는 null 을 "null" 글자로 찍음)
+  appendChildren(clear(el), [
     h('strong', {}, ok ? '⭕ 정답입니다!' : answer === SKIPPED ? '⏭️ 건너뛰었어요' : '❌ 아쉬워요, 오답입니다'),
     ok ? null : h('span', {}, ` 정답: ${q.answer}`),
-  );
+  ]);
 }

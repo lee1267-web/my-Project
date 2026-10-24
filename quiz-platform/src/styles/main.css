@@ -207,7 +207,7 @@ main { flex: 1; outline: none; padding-bottom: 48px; }
 .dialog-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 20px; flex-wrap: wrap; }
 
 /* 알림(toast) */
-.toast-region { position: fixed; left: 50%; bottom: 20px; transform: translateX(-50%); display: flex; flex-direction: column; gap: 8px; z-index: 200; width: min(420px, calc(100vw - 32px)); pointer-events: none; }
+.toast-region { position: fixed; left: 50%; bottom: 96px; /* 아래 고정 버튼(직접 만들기·저장 바)을 가리지 않도록 */ transform: translateX(-50%); display: flex; flex-direction: column; gap: 8px; z-index: 200; width: min(420px, calc(100vw - 32px)); pointer-events: none; }
 .toast { background: var(--ink); color: #fff; padding: 12px 16px; border-radius: 12px; box-shadow: var(--shadow-lg); font-size: 0.95rem; animation: toast-in 0.2s ease-out; transition: opacity 0.3s; }
 .toast-success { background: #0f6b3a; }
 .toast-error { background: #b0262d; }
@@ -307,8 +307,9 @@ main { flex: 1; outline: none; padding-bottom: 48px; }
 .action-bar-inner { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
 .action-bar .spacer { flex: 1; }
 @media (max-width: 600px) {
-  .action-bar-inner { display: grid; grid-template-columns: 1fr 1fr; }
+  .action-bar-inner { display: grid; grid-template-columns: repeat(3, 1fr); }
   .action-bar .spacer { display: none; }
+  .action-bar .btn { padding-left: 8px; padding-right: 8px; }
   .action-bar [type='submit'] { grid-column: 1 / -1; order: -1; }
 }
 .preview-list { padding-left: 20px; }
@@ -429,7 +430,6 @@ main { flex: 1; outline: none; padding-bottom: 48px; }
 .fab:focus-visible { box-shadow: var(--focus), 0 10px 28px rgba(84, 51, 220, 0.38); border-radius: 999px; }
 .fab-icon { font-size: 1.6rem; line-height: 1; font-weight: 700; margin-top: -2px; }
 body.has-fab main { padding-bottom: 104px; } /* 버튼이 마지막 내용을 가리지 않도록 */
-body.has-fab .toast-region { bottom: 92px; } /* 알림이 버튼에 가리지 않도록 */
 @media (max-width: 380px) { .fab { padding: 0 18px 0 14px; font-size: 0.95rem; } }
 
 /* 추천 검색어 · 세부 분류 · 태그 */

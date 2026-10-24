@@ -47,6 +47,13 @@ export function watchErrors(page, bucket, ignore = []) {
   });
 }
 
+// 화면에 프로그램 내부 값이 글자로 새어 나오지 않았는지 검사 ("null", "undefined", "[object Object]", "NaN")
+export async function assertNoJunkText(page, where = '') {
+  const text = await page.locator('main').innerText();
+  const m = text.match(/\bnull\b|\bundefined\b|\[object [A-Za-z]+\]|\bNaN\b/);
+  assert.ok(!m, `${where} 화면에 "${m?.[0]}" 글자가 보임: …${m ? text.slice(Math.max(0, m.index - 30), m.index + 20) : ''}…`);
+}
+
 export async function h1(page) {
   await page.locator('main h1').first().waitFor();
   return (await page.locator('main h1').first().textContent()).trim();
@@ -107,6 +114,7 @@ export async function answerCurrent(page, answer) {
   }
   const fb = form.locator('.feedback');
   await fb.locator('strong').waitFor();
+  await assertNoJunkText(page, '정답 확인 후');
   return (await fb.textContent()).trim();
 }
 
@@ -123,6 +131,7 @@ export async function playAll(page, answers) {
   }
   await page.waitForURL(/\/result$/);
   await page.locator('.score-num').waitFor();
+  await assertNoJunkText(page, '결과');
 }
 
 export async function noHorizontalScroll(page) {

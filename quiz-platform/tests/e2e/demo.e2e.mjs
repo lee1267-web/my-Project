@@ -1,7 +1,7 @@
 // 데모 모드 E2E: 핵심 사용자 흐름을 실제 브라우저(Chromium)에서 검사
 import {
   loadPlaywright, assert, step, summary, watchErrors, h1, fillQuiz, saveQuiz,
-  answerCurrent, nextQuestion, playAll, noHorizontalScroll,
+  answerCurrent, nextQuestion, playAll, noHorizontalScroll, assertNoJunkText,
 } from './helpers.mjs';
 
 const BASE = process.env.BASE_URL;
@@ -350,6 +350,17 @@ export async function run() {
     assert.equal(await page.evaluate(() => document.activeElement.textContent), '내 퀴즈');
     await page.keyboard.press('Enter');
     await page.waitForURL(/\/my$/);
+  });
+
+  await step('모든 주요 화면에 "null"·"undefined" 같은 글자가 새어 나오지 않음', async () => {
+    const paths = ['/', '/?q=노래', '/?cat=music&sub=trot', '/create', '/my', '/quiz/Samplehistory0000000', '/quiz/Samplehistory0000000?saved=1',
+      '/quiz/Samplehistory0000000/result', '/quiz/not-valid', '/nope'];
+    for (const path of paths) {
+      await page.goto(BASE + path);
+      await page.locator('main h1').first().waitFor();
+      await page.waitForTimeout(150);
+      await assertNoJunkText(page, path);
+    }
   });
 
   await step('콘솔 오류 없음', async () => {
