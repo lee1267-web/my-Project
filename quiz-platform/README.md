@@ -67,7 +67,7 @@ npm run dev:demo
 > ⚠️ **데모 모드는 실제 공유가 아닙니다.** 퀴즈가 *지금 쓰는 브라우저의 localStorage* 에만 저장됩니다.
 > 공유 링크를 다른 브라우저·기기·시크릿 창에서 열면 "퀴즈를 찾을 수 없어요"가 나옵니다.
 > 화면 위의 노란 "데모 모드" 띠로 언제든 구분할 수 있습니다.
-> 데모 모드에는 샘플 퀴즈 20세트가 처음부터 들어 있습니다(플레이 수 0에서 시작).
+> 데모 모드에는 샘플 퀴즈 21세트가 처음부터 들어 있습니다(플레이 수 0에서 시작).
 
 ---
 
@@ -196,7 +196,7 @@ npm run deploy        # = npm run build && firebase deploy --only hosting
 | `npm test` | 단위 테스트: 입력 검증, 채점, 검색 토큰, 라우팅, 잘못된 ID, 데모 저장소, **샘플 1,000문제 무결성** | 없음 |
 | `npm run build` | 문법 검사 + 배포용 빌드(`dist/`) | 없음 |
 | `npm run test:rules` | Firestore/Storage **보안 규칙** 테스트 (에뮬레이터에서 실행) | Java 11+ |
-| `npm run test:e2e` | 실제 브라우저(Chromium) 테스트: 데모 모드 전체 흐름 + 샘플 20세트 끝까지 풀기 + 설정 누락 화면 | Playwright |
+| `npm run test:e2e` | 실제 브라우저(Chromium) 테스트: 데모 모드 전체 흐름 + 샘플 21세트 끝까지 풀기(전부 정답·전부 오답·반반) + 설정 누락 화면 | Playwright |
 | `npm run test:e2e:emulator` | 실제 Firebase SDK + 보안 규칙 + 에뮬레이터에서 **서로 다른 두 사용자** 간 공유·권한·이미지 업로드 검사 | Java 11+, Playwright |
 | `npm run test:e2e:hosting` | 실제 배포와 같은 Hosting 에뮬레이터(보안 헤더·CSP·새로고침 처리 적용)에서 전체 흐름 검사 | Java 11+, Playwright |
 
@@ -259,7 +259,7 @@ quiz-platform/
 │   │   ├── storageService.js# 이미지 업로드
 │   │   └── quizModel.js     # 저장 형식 정리
 │   ├── utils/               # validation, grading, router, search, dom, clipboard, errors ...
-│   └── data/samples/        # 샘플 퀴즈 20세트 (세트당 50문제)
+│   └── data/samples/        # 샘플 퀴즈 21세트 (세트당 50문제)
 └── tests/
     ├── unit/                # Vitest 단위 테스트
     ├── rules/               # 보안 규칙 테스트
