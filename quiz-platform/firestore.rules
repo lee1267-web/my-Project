@@ -1,0 +1,113 @@
+rules_version = '2';
+
+// ─────────────────────────────────────────────────────────────
+// 퀴즈공방 Firestore 보안 규칙
+//  - 누구나(로그인 안 해도) "공개 + active" 퀴즈만 읽을 수 있음
+//  - 비공개 퀴즈는 소유자(request.auth.uid == ownerUid)만 읽기 가능
+//  - 생성/수정/삭제는 로그인(익명 포함)한 소유자만 가능
+//  - ownerUid 는 클라이언트 값을 믿지 않고 request.auth.uid 와 같아야만 저장됨
+//  - 플레이 수는 다른 사람도 "정확히 +1" 만 가능
+// ⚠️ 규칙에는 반복문이 없어 문제 배열 "각 항목"의 내용까지는 검사할 수 없습니다.
+//    (README 의 "보안 규칙의 한계" 참고 → 필요하면 Cloud Functions 로 서버 검증)
+// ─────────────────────────────────────────────────────────────
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(data) {
+      return signedIn() && data.ownerUid == request.auth.uid;
+    }
+
+    function isVisible(data) {
+      return (data.isPublic == true && data.status == 'active') || isOwner(data);
+    }
+
+    function validCategory(c) {
+      return c in ['general', 'history', 'music', 'idol', 'movie', 'anime', 'game',
+                   'sports', 'science', 'geography', 'language', 'etc'];
+    }
+
+    function validImageUrl(u) {
+      return u is string && u.size() <= 2000
+        && (u == '' || u.matches('^https://.*') || u.matches('^http://(localhost|127\\.0\\.0\\.1)(:[0-9]+)?/.*'));
+    }
+
+    // 소유자가 쓸 수 있는 내용 필드 검증
+    function validContent(d) {
+      return d.title is string && d.title.trim().size() >= 1 && d.title.size() <= 100
+        && d.description is string && d.description.size() <= 500
+        && d.category is string && validCategory(d.category)
+        && validImageUrl(d.imageUrl)
+        && d.isPublic is bool
+        && d.questions is list && d.questions.size() >= 1 && d.questions.size() <= 100
+        && d.questionCount is int && d.questionCount == d.questions.size()
+        && d.searchTokens is list && d.searchTokens.size() <= 200
+        // 첫 문제는 형식 검사 (나머지 문제는 규칙 한계로 클라이언트 + 문서 크기 제한(1MB)에 의존)
+        && d.questions[0] is map
+        && d.questions[0].question is string && d.questions[0].question.size() >= 1
+        && d.questions[0].answer is string && d.questions[0].answer.size() >= 1
+        && d.questions[0].type in ['text', 'choice'];
+    }
+
+    function allowedKeys() {
+      return ['title', 'description', 'category', 'imageUrl', 'isPublic', 'questions',
+              'questionCount', 'searchTokens', 'ownerUid', 'status', 'playCount',
+              'createdAt', 'updatedAt'];
+    }
+
+    match /quizzes/{quizId} {
+      // 단건 조회: 없는 문서(resource == null)는 "없음"으로 응답하도록 허용
+      allow get: if resource == null || isVisible(resource.data);
+
+      // 목록 조회: 쿼리가 isPublic==true && status=='active' 이거나 ownerUid==내 uid 여야 통과
+      allow list: if isVisible(resource.data);
+
+      allow create: if signedIn()
+        && request.resource.data.keys().hasOnly(allowedKeys())
+        && request.resource.data.keys().hasAll(allowedKeys())
+        && request.resource.data.ownerUid == request.auth.uid
+        && request.resource.data.status == 'active'
+        && request.resource.data.playCount == 0
+        && request.resource.data.createdAt == request.time
+        && request.resource.data.updatedAt == request.time
+        && quizId.size() == 20
+        && validContent(request.resource.data);
+
+      // 소유자 수정: ownerUid/status/playCount/createdAt 는 바꿀 수 없음
+      allow update: if (isOwner(resource.data)
+          && request.resource.data.keys().hasOnly(allowedKeys())
+          && !request.resource.data.diff(resource.data).affectedKeys()
+               .hasAny(['ownerUid', 'status', 'playCount', 'createdAt'])
+          && request.resource.data.updatedAt == request.time
+          && validContent(request.resource.data))
+        // 플레이 수 +1 (공개 퀴즈, 로그인(익명 포함) 사용자 누구나)
+        || (signedIn()
+          && isVisible(resource.data)
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['playCount'])
+          && request.resource.data.playCount == resource.data.playCount + 1);
+
+      allow delete: if isOwner(resource.data);
+    }
+
+    // 삭제 표시(묘비): "삭제된 퀴즈"와 "없는 퀴즈"를 구분해 안내하기 위해 사용
+    // 같은 배치에서 본인 퀴즈를 삭제할 때만 만들 수 있고, 이후 수정/삭제 불가
+    match /deletedQuizzes/{quizId} {
+      allow get: if true;
+      allow list: if false;
+      allow create: if signedIn()
+        && get(/databases/$(database)/documents/quizzes/$(quizId)).data.ownerUid == request.auth.uid
+        && !existsAfter(/databases/$(database)/documents/quizzes/$(quizId))
+        && request.resource.data.keys().hasOnly(['deletedAt'])
+        && request.resource.data.deletedAt == request.time;
+      allow update, delete: if false;
+    }
+
+    // 그 밖의 모든 경로는 차단
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

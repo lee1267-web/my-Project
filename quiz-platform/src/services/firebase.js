@@ -15,7 +15,7 @@ export function getFirebase() {
     auth = getAuth(app);
     auth.languageCode = 'ko';
     if (USE_EMULATORS) {
-      const host = location.hostname;
+      const host = '127.0.0.1'; // firebase.json 의 emulators.host 와 같아야 합니다
       connectFirestoreEmulator(db, host, 8080);
       connectAuthEmulator(auth, `http://${host}:9099`, { disableWarnings: true });
     }

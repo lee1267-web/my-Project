@@ -2,7 +2,7 @@
 //  - Firebase 모드: Firebase Storage 의 quiz-images/{uid}/{quizId}/ 폴더에 저장
 //  - 데모 모드: 이미지를 작게 줄여 data URL 로 바꾼 뒤 퀴즈 데이터와 함께 브라우저에 저장
 import { IS_DEMO, STORAGE_ENABLED } from './config.js';
-import { getFirebaseStorage } from './firebase.js';
+const getFirebaseStorage = () => import('./firebase.js').then((m) => m.getFirebaseStorage());
 import { validateImageFile } from '../utils/validation.js';
 import { AppError, toAppError } from '../utils/errors.js';
 import { randomId } from '../utils/ids.js';

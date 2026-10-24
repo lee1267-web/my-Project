@@ -9,7 +9,13 @@
     "build": "vite build",
     "preview": "vite preview",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "test:rules": "firebase emulators:exec --only firestore,storage --project demo-quizbang-rules \"vitest run --config vitest.rules.config.js\"",
+    "emulators": "firebase emulators:start --only auth,firestore,storage --project demo-quizbang",
+    "dev:emulator": "vite --mode emulator",
+    "test:e2e": "node tests/e2e/run-e2e.mjs",
+    "deploy:rules": "firebase deploy --only firestore:rules,firestore:indexes,storage",
+    "deploy": "npm run build && firebase deploy --only hosting"
   },
   "dependencies": {
     "firebase": "^13.1.0"

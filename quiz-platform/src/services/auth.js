@@ -1,7 +1,8 @@
 // 익명 인증: 회원가입 없이 "이 브라우저의 사용자"를 식별합니다.
 // ⚠️ 브라우저 데이터를 지우거나 다른 기기를 쓰면 새 사용자가 되어 기존 퀴즈를 수정할 수 없습니다.
 import { IS_DEMO } from './config.js';
-import { getFirebase } from './firebase.js';
+// Firebase SDK 는 필요할 때만 불러옵니다(데모 모드에서는 불러오지 않음).
+const loadFirebase = () => import('./firebase.js');
 import { randomId } from '../utils/ids.js';
 import { toAppError } from '../utils/errors.js';
 
@@ -24,12 +25,16 @@ export function waitForAuthReady() {
   if (IS_DEMO) return Promise.resolve(demoUid());
   if (!readyPromise) {
     readyPromise = (async () => {
+      const { getFirebase } = await loadFirebase();
       const { auth } = getFirebase();
       await auth.authStateReady();
-      return auth.currentUser?.uid || null;
-    })();
+      return auth;
+    })().catch((err) => {
+      readyPromise = null;
+      throw toAppError(err);
+    });
   }
-  return readyPromise.then(() => (IS_DEMO ? demoUid() : getFirebase().auth.currentUser?.uid || null));
+  return readyPromise.then((auth) => auth.currentUser?.uid || null);
 }
 
 // 로그인이 필요할 때 호출: 아직 로그인하지 않았으면 익명 로그인을 합니다.
@@ -40,6 +45,7 @@ export async function ensureSignedIn() {
   if (!signInPromise) {
     signInPromise = (async () => {
       const { signInAnonymously } = await import('firebase/auth');
+      const { getFirebase } = await loadFirebase();
       const { auth } = getFirebase();
       const cred = await signInAnonymously(auth);
       return cred.user.uid;

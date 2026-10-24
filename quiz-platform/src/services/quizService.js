@@ -3,18 +3,26 @@
 import { IS_DEMO } from './config.js';
 import { ensureSignedIn, getCurrentUid } from './auth.js';
 import { createDemoRepo } from './demoRepo.js';
-import * as firestoreRepo from './firestoreRepo.js';
 import { toEditableFields } from './quizModel.js';
 import { uploadQuizImage, deleteImageUrls, deleteQuizFolder } from './storageService.js';
-import { SAMPLE_QUIZZES } from '../data/sampleQuizzes.js';
 import { AppError } from '../utils/errors.js';
 import { QUIZ_ID_PATTERN } from '../utils/constants.js';
 import { parseSearchTerm, matchesSearch } from '../utils/search.js';
 import { validateQuiz } from '../utils/validation.js';
 
-const repo = IS_DEMO
-  ? createDemoRepo({ seed: SAMPLE_QUIZZES.map((s) => ({ id: s.demoId, fields: toEditableFields(s) })) })
-  : firestoreRepo;
+const loadSamples = () => import('../data/samples/index.js').then((m) => m.SAMPLE_QUIZZES);
+
+// 데모 모드는 처음 실행할 때 샘플 퀴즈를 넣어 두기 위해 샘플 파일을 불러옵니다.
+let repoPromise = null;
+function getRepo() {
+  if (!repoPromise) {
+    repoPromise = IS_DEMO
+      ? loadSamples().then((samples) =>
+          createDemoRepo({ seed: samples.map((s) => ({ id: s.demoId, fields: toEditableFields(s) })) }))
+      : import('./firestoreRepo.js');
+  }
+  return repoPromise;
+}
 
 export function isValidQuizId(id) {
   return typeof id === 'string' && QUIZ_ID_PATTERN.test(id);
@@ -24,19 +32,19 @@ export async function getQuiz(id) {
   // 형식이 잘못된 ID 는 DB 에 묻지 않고 바로 "없음" 처리
   if (!isValidQuizId(id)) throw new AppError('not-found', '잘못된 퀴즈 주소입니다. 링크가 정확한지 확인해 주세요.');
   const uid = await getCurrentUid();
-  return repo.getQuiz(id, uid);
+  return (await getRepo()).getQuiz(id, uid);
 }
 
 // search: 사용자가 입력한 검색어. 첫 단어는 DB 에서, 나머지 단어는 받아온 결과에서 거릅니다.
 export async function listPublicQuizzes({ category = '', search = '', sort = 'latest', cursor = null } = {}) {
   const parsed = parseSearchTerm(search);
-  const res = await repo.listPublicQuizzes({ category, token: parsed?.primary, sort, cursor });
+  const res = await (await getRepo()).listPublicQuizzes({ category, token: parsed?.primary, sort, cursor });
   return { ...res, items: res.items.filter((q) => matchesSearch(q, parsed)) };
 }
 
 export async function listMyQuizzes() {
   const uid = await ensureSignedIn();
-  return { uid, items: await repo.listMyQuizzes(uid) };
+  return { uid, items: await (await getRepo()).listMyQuizzes(uid) };
 }
 
 // form: 편집 화면의 상태. 새 이미지 파일은 form.thumbFile / question.imageFile 에 들어 있습니다.
@@ -44,6 +52,7 @@ export async function listMyQuizzes() {
 export async function saveQuiz(form, existing = null, onProgress = () => {}) {
   const { valid } = validateQuiz(form);
   if (!valid) throw new AppError('unknown', '입력 내용을 다시 확인해 주세요.');
+  const repo = await getRepo();
   const uid = await ensureSignedIn();
   if (existing && existing.ownerUid !== uid) throw new AppError('forbidden', '본인이 만든 퀴즈만 수정할 수 있습니다.');
   const quizId = existing ? existing.id : repo.newQuizId();
@@ -81,7 +90,7 @@ export async function saveQuiz(form, existing = null, onProgress = () => {}) {
 export async function deleteQuiz(quiz) {
   const uid = await ensureSignedIn();
   if (quiz.ownerUid !== uid) throw new AppError('forbidden', '본인이 만든 퀴즈만 삭제할 수 있습니다.');
-  await repo.deleteQuiz(quiz.id, uid);
+  await (await getRepo()).deleteQuiz(quiz.id, uid);
   await deleteQuizFolder(uid, quiz.id);
 }
 
@@ -89,19 +98,25 @@ export async function deleteQuiz(quiz) {
 export async function recordPlay(quizId) {
   try {
     await ensureSignedIn();
-    await repo.incrementPlayCount(quizId);
+    await (await getRepo()).incrementPlayCount(quizId);
   } catch (e) {
     console.warn('플레이 수 기록 실패', e);
   }
 }
 
 // 샘플 퀴즈를 "내 퀴즈"로 복사해 추가합니다. (Firebase 모드에서도 실제로 저장됨)
-export async function addSampleQuizzes(keys) {
+export async function getSampleList() {
+  return (await loadSamples()).map((s) => ({ key: s.key, title: s.title, category: s.category, count: s.questions.length }));
+}
+
+export async function addSampleQuizzes(keys, onProgress = () => {}) {
+  const samples = (await loadSamples()).filter((s) => keys.includes(s.key));
   const ids = [];
-  for (const sample of SAMPLE_QUIZZES.filter((s) => keys.includes(s.key))) {
+  for (const [i, sample] of samples.entries()) {
+    onProgress(`샘플 퀴즈 추가 중... (${i + 1}/${samples.length})`);
     ids.push(await saveQuiz({ ...sample, isPublic: true }));
   }
   return ids;
 }
 
-export { SAMPLE_QUIZZES, IS_DEMO };
+export { IS_DEMO };

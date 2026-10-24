@@ -1,0 +1,40 @@
+rules_version = '2';
+
+// ─────────────────────────────────────────────────────────────
+// 퀴즈공방 Storage 보안 규칙
+//  - 경로: quiz-images/{uid}/{quizId}/{파일명}
+//  - 업로드/삭제: 로그인한 본인(uid 일치)만
+//  - 파일 형식: JPG/PNG/WEBP/GIF, 2MB 미만
+//  - 읽기: 소유자, 또는 해당 퀴즈가 공개 상태일 때
+//    (⚠️ getDownloadURL 로 받은 "토큰 포함 URL"은 이 규칙과 무관하게 누구나 열 수 있습니다)
+// ─────────────────────────────────────────────────────────────
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    match /quiz-images/{uid}/{quizId}/{fileName} {
+      function isOwner() {
+        return request.auth != null && request.auth.uid == uid;
+      }
+      function quizIsPublic() {
+        return firestore.get(/databases/(default)/documents/quizzes/$(quizId)).data.isPublic == true
+          && firestore.get(/databases/(default)/documents/quizzes/$(quizId)).data.ownerUid == uid;
+      }
+
+      allow read: if isOwner() || quizIsPublic();
+      allow create, update: if isOwner()
+        && request.resource.size < 2 * 1024 * 1024
+        && request.resource.contentType.matches('image/(jpeg|png|webp|gif)')
+        && fileName.matches('^[A-Za-z0-9]{12}\\.(jpg|png|webp|gif)$');
+      allow delete: if isOwner();
+    }
+
+    // 폴더 목록 조회(퀴즈 삭제 시 이미지 정리용)는 본인 폴더만
+    match /quiz-images/{uid}/{quizId} {
+      allow list: if request.auth != null && request.auth.uid == uid;
+    }
+
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}

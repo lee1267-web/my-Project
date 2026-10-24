@@ -80,6 +80,8 @@ export function createRouter({ routes, notFound, onRender }) {
     if (e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
     const url = new URL(a.href, location.href);
     if (url.origin !== location.origin) return;
+    // 같은 페이지 안의 #이동은 브라우저 기본 동작(스크롤)에 맡깁니다.
+    if (url.hash && url.pathname === location.pathname && url.search === location.search) return;
     e.preventDefault();
     if (url.pathname + url.search === location.pathname + location.search && !url.hash) {
       render();
