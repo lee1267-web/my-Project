@@ -13,7 +13,7 @@ import { validateQuiz } from '../utils/validation.js';
 
 const loadSamples = () => import('../data/samples/index.js').then((m) => m.SAMPLE_QUIZZES);
 // 샘플 퀴즈 내용을 바꾸면 이 값을 올리세요. 데모 모드 브라우저의 샘플이 새 내용으로 갱신됩니다.
-const SAMPLE_VERSION = '2026-10-categories';
+const SAMPLE_VERSION = '2026-10-31sets';
 
 // 데모 모드는 처음 실행할 때 샘플 퀴즈를 넣어 두기 위해 샘플 파일을 불러옵니다.
 let repoPromise = null;
