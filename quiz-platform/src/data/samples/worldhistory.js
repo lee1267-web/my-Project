@@ -6,6 +6,8 @@ export default {
   title: '세계사 50제: 고대 문명부터 냉전까지',
   description: '피라미드부터 베를린 장벽 붕괴까지, 교과서에 나오는 세계사 핵심 사건과 인물 50문제.',
   category: 'history',
+  subcategory: 'world',
+  tags: ['고대 문명', '세계 대전'],
   imageUrl: '',
   questions: [
     t('고대 이집트에서 왕을 부르던 칭호는?', '파라오'),

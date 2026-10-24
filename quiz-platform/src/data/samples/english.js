@@ -6,6 +6,8 @@ export default {
   title: '기초 영어 단어 50제',
   description: '중학교 수준 영어 단어의 뜻, 철자, 반대말, 불규칙 변화 50문제. 영어 주관식은 대소문자를 구분하지 않아요.',
   category: 'language',
+  subcategory: 'english',
+  tags: ['영단어', '중학 영어'],
   imageUrl: '',
   questions: [
     c('library 의 뜻은?', '도서관', ['도서관', '실험실', '박물관', '교실']),

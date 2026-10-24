@@ -6,6 +6,8 @@ export default {
   title: '세계 수도·지리 50제',
   description: '나라 이름을 보고 수도를 맞혀 보세요. 헷갈리기 쉬운 수도(캔버라, 오타와, 베른…)도 있어요!',
   category: 'geography',
+  subcategory: 'capitals',
+  tags: ['수도', '나라'],
   imageUrl: '',
   questions: [
     t('프랑스의 수도는?', '파리'),

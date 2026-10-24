@@ -4,6 +4,7 @@ import { createRouter } from './utils/router.js';
 import { renderHeader, updateActiveNav } from './components/header.js';
 import { renderModeBanner } from './components/modeBanner.js';
 import { renderErrorView } from './components/errorView.js';
+import { renderCreateFab, setCreateFabVisible } from './components/createFab.js';
 import { clear, setTitle } from './utils/dom.js';
 import { IS_CONFIG_OK } from './services/config.js';
 import { toAppError } from './utils/errors.js';
@@ -18,9 +19,9 @@ import * as configErrorPage from './pages/configError.js';
 
 const routes = [
   { path: '/', page: homePage, nav: 'home' },
-  { path: '/create', page: editorPage, nav: 'create' },
-  { path: '/edit/:id', page: editorPage, nav: 'my' },
-  { path: '/quiz/:id', page: playPage, nav: 'home' },
+  { path: '/create', page: editorPage, nav: 'create', fab: false },
+  { path: '/edit/:id', page: editorPage, nav: 'my', fab: false },
+  { path: '/quiz/:id', page: playPage, nav: 'home', fab: false },
   { path: '/quiz/:id/result', page: resultPage, nav: 'home' },
   { path: '/my', page: myQuizzesPage, nav: 'my' },
 ];
@@ -29,6 +30,7 @@ const notFound = { path: '*', page: notFoundPage };
 const main = document.getElementById('main');
 renderHeader(document.getElementById('site-header'));
 renderModeBanner(document.getElementById('mode-banner'));
+if (IS_CONFIG_OK) renderCreateFab(document.getElementById('app'));
 
 const router = createRouter({
   routes,
@@ -37,6 +39,7 @@ const router = createRouter({
     clear(main);
     setTitle('');
     updateActiveNav(route.nav);
+    setCreateFabVisible(route.fab !== false);
     // Firebase 설정이 비어 있으면 모든 페이지 대신 설정 안내를 보여줍니다.
     const page = IS_CONFIG_OK ? route.page : configErrorPage;
     const ctx = {

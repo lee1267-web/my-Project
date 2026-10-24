@@ -6,6 +6,8 @@ export default {
   title: '축구 50제: 월드컵과 한국 축구',
   description: '2002 4강 신화부터 손흥민, 메시, 월드컵 역사와 경기 규칙까지 축구 팬을 위한 50문제. (2026년 10월 기준)',
   category: 'sports',
+  subcategory: 'soccer',
+  tags: ['월드컵', '손흥민'],
   imageUrl: '',
   questions: [
     c('FIFA 월드컵은 몇 년마다 열릴까요?', '4년', ['2년', '3년', '4년', '5년']),

@@ -6,6 +6,8 @@ export default {
   title: '가사 보고 노래 맞히기 50 (민요·동요·세계 명곡)',
   description: '가사 한 소절을 보고 노래 제목을 맞혀 보세요. 저작권이 끝난 전래동요·민요·세계 고전 노래만 사용했어요.',
   category: 'music',
+  subcategory: 'folk',
+  tags: ['가사', '민요', '동요', '팝송'],
   imageUrl: '',
   questions: [
     t('“나를 버리고 가시는 님은 십 리도 못 가서 발병 난다” — 이 노래는?', '아리랑'),

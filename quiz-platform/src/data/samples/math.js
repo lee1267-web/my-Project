@@ -6,6 +6,8 @@ export default {
   title: '수학 두뇌 퀴즈 50제',
   description: '계산, 수열, 도형, 확률, 이진수까지! 숫자로 답하는 문제는 숫자만 입력하면 돼요.',
   category: 'science',
+  subcategory: 'math',
+  tags: ['계산', '도형', '확률'],
   imageUrl: '',
   questions: [
     t('12 × 12 = ?', '144'),

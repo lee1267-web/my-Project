@@ -6,6 +6,8 @@ export default {
   title: 'K-POP 아이돌 세대별 50제 (1세대~4세대)',
   description: '서태지와 아이들부터 4세대 아이돌까지! 세대별 대표 그룹, 데뷔곡, 소속사를 맞혀 보세요. (2025년 기준 정보)',
   category: 'idol',
+  subcategory: '',
+  tags: ['1세대', '2세대', '3세대', '4세대', '걸그룹'],
   imageUrl: '',
   questions: [
     // 1세대 (1990년대 ~ 2000년대 초)

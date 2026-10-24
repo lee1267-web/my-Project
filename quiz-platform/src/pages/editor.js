@@ -1,7 +1,7 @@
 // 퀴즈 만들기(/create) 와 수정하기(/edit/:id) 화면
 import { h, clear, setTitle } from '../utils/dom.js';
-import { CATEGORIES, LIMITS, QUESTION_TYPES, IMAGE_TYPES } from '../utils/constants.js';
-import { validateQuiz, validateImageFile, parseAltAnswers } from '../utils/validation.js';
+import { CATEGORIES, CATEGORY_KEYS, LIMITS, QUESTION_TYPES, IMAGE_TYPES, getCategory, getSubcategory } from '../utils/constants.js';
+import { validateQuiz, validateImageFile, parseAltAnswers, parseTags } from '../utils/validation.js';
 import { getQuiz, saveQuiz } from '../services/quizService.js';
 import { ensureSignedIn } from '../services/auth.js';
 import { isImageUploadEnabled } from '../services/storageService.js';
@@ -32,7 +32,7 @@ function newQuestion(type = 'text') {
 }
 
 function emptyForm() {
-  return { title: '', description: '', category: '', isPublic: true, imageUrl: '', thumbFile: null, thumbPreview: '', questions: [newQuestion('text')] };
+  return { title: '', description: '', category: '', subcategory: '', tagsText: '', isPublic: true, imageUrl: '', thumbFile: null, thumbPreview: '', questions: [newQuestion('text')] };
 }
 
 function formFromQuiz(quiz) {
@@ -40,6 +40,8 @@ function formFromQuiz(quiz) {
     title: quiz.title,
     description: quiz.description,
     category: quiz.category,
+    subcategory: quiz.subcategory || '',
+    tagsText: (quiz.tags || []).join(', '),
     isPublic: quiz.isPublic,
     imageUrl: quiz.imageUrl,
     thumbFile: null,
@@ -63,6 +65,8 @@ function toSubmit(form) {
     title: form.title,
     description: form.description,
     category: form.category,
+    subcategory: form.subcategory || '',
+    tags: parseTags(form.tagsText),
     isPublic: form.isPublic,
     imageUrl: form.imageUrl,
     thumbFile: form.thumbFile,
@@ -118,6 +122,11 @@ export async function render(container, ctx) {
   setTitle(editId ? '퀴즈 수정' : '퀴즈 만들기');
 
   let form = existing ? formFromQuiz(existing) : emptyForm();
+  // 홈에서 보던 분류로 들어온 경우 미리 채움 (/create?cat=music&sub=ballad)
+  if (!existing && CATEGORY_KEYS.includes(ctx.query.cat)) {
+    form.category = ctx.query.cat;
+    if (getSubcategory(form.category, ctx.query.sub)) form.subcategory = ctx.query.sub;
+  }
   let dirty = false;
   let saving = false;
   const imagesEnabled = isImageUploadEnabled();
@@ -153,7 +162,33 @@ export async function render(container, ctx) {
     h('option', { value: '' }, '카테고리를 선택하세요'),
     CATEGORIES.map((c) => h('option', { value: c.key, selected: form.category === c.key }, `${c.emoji} ${c.label}`)),
   );
-  catSelect.addEventListener('change', () => { form.category = catSelect.value; markDirty(); });
+  catSelect.addEventListener('change', () => {
+    form.category = catSelect.value;
+    form.subcategory = ''; // 카테고리가 바뀌면 세부 분류를 다시 고르게 함
+    renderSubOptions();
+    markDirty();
+  });
+
+  // 세부 분류(장르): 고른 카테고리에 맞는 목록만 보여줍니다.
+  const subSelect = h('select', { id: 'f-sub', class: 'select', 'aria-describedby': 'err-subcategory' });
+  function renderSubOptions() {
+    clear(subSelect);
+    if (!form.category) {
+      subSelect.append(h('option', { value: '' }, '먼저 카테고리를 고르세요'));
+      subSelect.disabled = true;
+      return;
+    }
+    subSelect.disabled = false;
+    subSelect.append(
+      h('option', { value: '' }, '선택 안 함'),
+      ...getCategory(form.category).subs.map((x) => h('option', { value: x.key, selected: form.subcategory === x.key }, x.label)),
+    );
+  }
+  subSelect.addEventListener('change', () => { form.subcategory = subSelect.value; markDirty(); });
+  renderSubOptions();
+
+  const tagsInput = h('input', { id: 'f-tags', class: 'input', type: 'text', placeholder: '예) 2000년대, OST, 명곡', value: form.tagsText, 'aria-describedby': 'tags-hint err-tags' });
+  tagsInput.addEventListener('input', () => { form.tagsText = tagsInput.value; markDirty(); });
 
   const publicInput = h('input', { id: 'f-public', type: 'checkbox', class: 'switch-input', checked: form.isPublic });
   const publicHint = h('p', { class: 'hint', id: 'public-hint' });
@@ -384,7 +419,7 @@ export async function render(container, ctx) {
     });
     container.querySelectorAll('[aria-invalid]').forEach((el) => el.removeAttribute('aria-invalid'));
     const fieldFor = {
-      title: titleInput, description: descInput, category: catSelect,
+      title: titleInput, description: descInput, category: catSelect, subcategory: subSelect, tags: tagsInput,
     };
     for (const path of Object.keys(errors)) {
       let el = fieldFor[path];
@@ -448,7 +483,8 @@ export async function render(container, ctx) {
     const dialog = h('dialog', { class: 'dialog dialog-wide', 'aria-labelledby': 'preview-title' },
       h('p', { class: 'eyebrow' }, '미리보기 · 정답이 표시됩니다'),
       h('h2', { id: 'preview-title', class: 'dialog-title' }, data.title.trim() || '(제목 없음)'),
-      h('p', { class: 'muted' }, `${cat ? `${cat.emoji} ${cat.label}` : '카테고리 미선택'} · 문제 ${data.questions.length}개 · ${data.isPublic ? '공개' : '비공개'}`),
+      h('p', { class: 'muted' }, `${cat ? `${cat.emoji} ${cat.label}` : '카테고리 미선택'}${getSubcategory(data.category, data.subcategory) ? ` > ${getSubcategory(data.category, data.subcategory).label}` : ''} · 문제 ${data.questions.length}개 · ${data.isPublic ? '공개' : '비공개'}`),
+      data.tags.length ? h('p', { class: 'tag-list' }, data.tags.map((t) => h('span', { class: 'tag' }, `#${t}`))) : null,
       data.description.trim() ? h('p', { class: 'preview-desc' }, data.description) : null,
       h('ol', { class: 'preview-list' },
         data.questions.map((q, i) => {
@@ -526,6 +562,7 @@ export async function render(container, ctx) {
             if (!form.questions.length) form.questions = [newQuestion('text')];
             titleInput.value = form.title; descInput.value = form.description;
             catSelect.value = form.category; publicInput.checked = form.isPublic;
+            tagsInput.value = form.tagsText || ''; renderSubOptions();
             titleInput.dispatchEvent(new Event('input')); descInput.dispatchEvent(new Event('input'));
             updatePublicUi(); renderThumb(); renderQuestions();
             box.remove();
@@ -554,6 +591,20 @@ export async function render(container, ctx) {
           h('label', { class: 'label', for: 'f-category' }, '카테고리 ', h('span', { class: 'req' }, '*')),
           catSelect, errorSlot('category'),
         ),
+        h('div', { class: 'field' },
+          h('label', { class: 'label', for: 'f-sub' }, '세부 분류 (선택)'),
+          subSelect,
+          h('p', { class: 'hint' }, '예) 음악 → 발라드. 세부 분류로도 검색돼요.'),
+          errorSlot('subcategory'),
+        ),
+      ),
+      h('div', { class: 'field' },
+        h('label', { class: 'label', for: 'f-tags' }, '태그 (선택)'),
+        tagsInput,
+        h('p', { class: 'hint', id: 'tags-hint' }, `쉼표(,)로 구분, 최대 ${LIMITS.tagsMax}개. 태그 단어로도 검색돼요.`),
+        errorSlot('tags'),
+      ),
+      h('div', { class: 'grid-2' },
         h('div', { class: 'field' },
           h('span', { class: 'label' }, '공개 여부'),
           h('label', { class: 'switch', for: 'f-public' }, publicInput, h('span', { class: 'switch-track', 'aria-hidden': 'true' }), h('span', {}, '공개 퀴즈로 저장')),

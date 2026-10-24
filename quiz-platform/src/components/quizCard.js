@@ -1,5 +1,5 @@
 import { h, formatDate } from '../utils/dom.js';
-import { getCategory } from '../utils/constants.js';
+import { getCategory, getSubcategory } from '../utils/constants.js';
 import { thumbnail } from './thumbnail.js';
 
 export function quizCard(quiz) {
@@ -8,9 +8,10 @@ export function quizCard(quiz) {
     h('a', { href: `/quiz/${quiz.id}`, class: 'quiz-card' },
       thumbnail(quiz, 'card-thumb'),
       h('div', { class: 'card-body' },
-        h('span', { class: 'badge badge-category' }, `${cat.emoji} ${cat.label}`),
+        h('span', { class: 'badge badge-category' }, `${cat.emoji} ${cat.label}${getSubcategory(quiz.category, quiz.subcategory) ? ` · ${getSubcategory(quiz.category, quiz.subcategory).label}` : ''}`),
         h('h3', { class: 'card-title' }, quiz.title),
         quiz.description ? h('p', { class: 'card-desc' }, quiz.description) : h('p', { class: 'card-desc muted' }, '설명이 없는 퀴즈입니다.'),
+        quiz.tags?.length ? h('p', { class: 'tag-list' }, quiz.tags.map((t) => h('span', { class: 'tag' }, `#${t}`))) : null,
         h('p', { class: 'card-meta' },
           h('span', {}, `문제 ${quiz.questionCount}개`),
           h('span', {}, `플레이 ${quiz.playCount.toLocaleString('ko-KR')}회`),

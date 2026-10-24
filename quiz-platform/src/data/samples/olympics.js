@@ -6,6 +6,8 @@ export default {
   title: '올림픽·스포츠 상식 50제',
   description: '올림픽 역사와 한국 스포츠 스타, 여러 종목의 규칙과 용어까지! 스포츠 상식 50문제.',
   category: 'sports',
+  subcategory: 'olympics',
+  tags: ['양궁', '마라톤', '야구'],
   imageUrl: '',
   questions: [
     t('1896년 제1회 근대 올림픽이 열린 도시는?', '아테네'),

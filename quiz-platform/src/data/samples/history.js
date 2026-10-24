@@ -6,6 +6,8 @@ export default {
   title: '한국사 50제: 고조선부터 현대까지',
   description: '고조선 건국부터 1988 서울 올림픽까지, 한국사 핵심 사건과 인물을 50문제로 정리했어요. 주관식은 띄어쓰기·대소문자를 무시하고 채점합니다.',
   category: 'history',
+  subcategory: 'korean',
+  tags: ['조선', '고려', '근현대사'],
   imageUrl: '',
   questions: [
     t('고조선을 세웠다고 전해지는 인물은?', '단군왕검', ['단군']),

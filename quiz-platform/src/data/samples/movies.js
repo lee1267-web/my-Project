@@ -6,6 +6,8 @@ export default {
   title: '영화 퀴즈 50제: 한국 영화부터 할리우드까지',
   description: '감독, 배우, 명대사, 캐릭터 이름까지! 한국 영화와 세계 영화 상식 50문제.',
   category: 'movie',
+  subcategory: '',
+  tags: ['한국 영화', '할리우드', '명대사'],
   imageUrl: '',
   questions: [
     t('영화 「기생충」의 감독은?', '봉준호'),

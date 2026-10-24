@@ -6,6 +6,8 @@ export default {
   title: '게임 상식 50제: 고전 게임부터 e스포츠까지',
   description: '마리오, 테트리스, 스타크래프트, 리그 오브 레전드, 마인크래프트… 게임 회사와 캐릭터를 맞혀 보세요.',
   category: 'game',
+  subcategory: '',
+  tags: ['닌텐도', 'e스포츠', '롤'],
   imageUrl: '',
   questions: [
     t('슈퍼 마리오의 원래 직업은?', '배관공'),

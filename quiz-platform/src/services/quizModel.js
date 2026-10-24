@@ -2,7 +2,8 @@
 import { buildSearchTokens } from '../utils/search.js';
 import { randomId } from '../utils/ids.js';
 import { safeImageUrl } from '../utils/safeUrl.js';
-import { CATEGORY_KEYS } from '../utils/constants.js';
+import { CATEGORY_KEYS, LIMITS, getSubcategory } from '../utils/constants.js';
+import { cleanTags } from '../utils/validation.js';
 
 export function cleanQuestion(q, index) {
   const type = q.type === 'choice' ? 'choice' : 'text';
@@ -27,15 +28,19 @@ export function cleanQuestion(q, index) {
 // 소유자가 수정할 수 있는 필드만 담습니다. (ownerUid/createdAt/playCount/status 는 별도 관리)
 export function toEditableFields(form) {
   const title = String(form.title || '').trim();
+  const subcategory = getSubcategory(form.category, form.subcategory) ? form.subcategory : '';
+  const tags = cleanTags(form.tags).slice(0, LIMITS.tagsMax).map((t) => t.slice(0, LIMITS.tagMax));
   return {
     title,
     description: String(form.description || '').trim(),
     category: form.category,
+    subcategory,
+    tags,
     imageUrl: form.imageUrl || '',
     isPublic: Boolean(form.isPublic),
     questions: (form.questions || []).map(cleanQuestion),
     questionCount: (form.questions || []).length,
-    searchTokens: buildSearchTokens(title),
+    searchTokens: buildSearchTokens({ title, category: form.category, subcategory, tags }),
   };
 }
 
@@ -78,6 +83,8 @@ export function fromStored(id, data, urlOpts = {}) {
     title: str(data.title, 200),
     description: str(data.description, 1000),
     category: CATEGORY_KEYS.includes(data.category) ? data.category : 'etc',
+    subcategory: getSubcategory(data.category, data.subcategory) ? data.subcategory : '',
+    tags: strList(data.tags, LIMITS.tagsMax).map((x) => x.slice(0, LIMITS.tagMax)),
     imageUrl: safeImageUrl(data.imageUrl, urlOpts),
     isPublic: data.isPublic === true,
     status: str(data.status, 20) || 'active',
@@ -85,7 +92,7 @@ export function fromStored(id, data, urlOpts = {}) {
     questions,
     questionCount: questions.length,
     playCount: num(data.playCount),
-    searchTokens: strList(data.searchTokens, 200),
+    searchTokens: strList(data.searchTokens, 300),
     createdAt: toDate(data.createdAt),
     updatedAt: toDate(data.updatedAt),
   };

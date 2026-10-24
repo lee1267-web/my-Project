@@ -108,7 +108,7 @@ export async function run() {
     await b.locator('.quiz-card:not(.skeleton)').first().waitFor();
     assert.deepEqual(await b.locator('.card-title').allTextContents(), ['공유 테스트 한국 지리']);
     await b.goto(`${BASE}/?q=${encodeURIComponent('비밀')}`);
-    await b.getByText('조건에 맞는 퀴즈가 없어요').waitFor();
+    await b.getByText(/퀴즈가 아직 없어요/).waitFor();
   });
 
   await step('사용자 B 의 "내 퀴즈"에는 A 의 퀴즈가 없음', async () => {

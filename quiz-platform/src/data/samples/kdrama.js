@@ -6,6 +6,8 @@ export default {
   title: '한국 드라마 50제: 대장금부터 오징어 게임까지',
   description: '한류를 이끈 드라마의 배우, 작가, 배경, 명장면을 맞혀 보세요. (2026년 10월 기준)',
   category: 'movie',
+  subcategory: 'kdrama',
+  tags: ['한류', '넷플릭스'],
   imageUrl: '',
   questions: [
     t('드라마 「대장금」에서 장금이를 연기한 배우는?', '이영애'),

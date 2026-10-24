@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { validateQuiz, validateImageFile, parseAltAnswers } from '../../src/utils/validation.js';
+import { validateQuiz, validateImageFile, parseAltAnswers, parseTags } from '../../src/utils/validation.js';
 
 const textQ = (over = {}) => ({ type: 'text', question: '조선을 세운 왕은?', answer: '이성계', altAnswers: [], options: [], ...over });
 const choiceQ = (over = {}) => ({ type: 'choice', question: '1+1은?', answer: '2', options: ['1', '2', '3'], altAnswers: [], ...over });
@@ -67,5 +67,18 @@ describe('이미지 파일 검증', () => {
 describe('추가 인정 답안 파싱', () => {
   it('쉼표로 구분하고 빈 값을 버린다', () => {
     expect(parseAltAnswers(' 태조 , ,태조 이성계,')).toEqual(['태조', '태조 이성계']);
+  });
+});
+
+describe('세부 분류·태그 검증', () => {
+  it('카테고리에 속한 세부 분류만 허용', () => {
+    expect(validateQuiz(quiz({ category: 'music', subcategory: 'ballad' })).valid).toBe(true);
+    expect(validateQuiz(quiz({ category: 'game', subcategory: 'ballad' })).errors.subcategory).toBeTruthy();
+    expect(validateQuiz(quiz({ category: 'music', subcategory: '' })).valid).toBe(true);
+  });
+  it('태그는 5개·15자 이하, # 과 중복은 정리', () => {
+    expect(parseTags('#발라드, OST,  ost , ,2000년대')).toEqual(['발라드', 'OST', '2000년대']);
+    expect(validateQuiz(quiz({ tags: ['1', '2', '3', '4', '5', '6'] })).errors.tags).toMatch(/5개/);
+    expect(validateQuiz(quiz({ tags: ['가'.repeat(16)] })).errors.tags).toMatch(/15자/);
   });
 });

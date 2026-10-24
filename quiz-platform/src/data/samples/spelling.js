@@ -6,6 +6,8 @@ export default {
   title: '헷갈리는 맞춤법 50제',
   description: '되/돼, 며칠/몇일, 금세/금새… 매일 쓰지만 헷갈리는 맞춤법과 낱말 뜻 50문제. (국립국어원 표준국어대사전 기준)',
   category: 'language',
+  subcategory: 'spelling',
+  tags: ['띄어쓰기', '국어'],
   imageUrl: '',
   questions: [
     c('바른 표기는? “그러면 ○○○.”', '안 돼요', ['안 돼요', '안 되요', '않 돼요', '않 되요']),

@@ -1,4 +1,4 @@
-import { LIMITS, CATEGORY_KEYS, IMAGE_TYPES } from './constants.js';
+import { LIMITS, CATEGORY_KEYS, IMAGE_TYPES, getSubcategory } from './constants.js';
 
 // 화면에서 사용하는 입력 검증입니다.
 // ⚠️ 클라이언트 검증은 사용자 편의를 위한 것이며 보안을 보장하지 않습니다.
@@ -22,6 +22,14 @@ export function validateQuiz(quiz) {
 
   if (!quiz.category) errors.category = '카테고리를 선택해 주세요.';
   else if (!CATEGORY_KEYS.includes(quiz.category)) errors.category = '올바른 카테고리를 선택해 주세요.';
+
+  if (quiz.subcategory && !getSubcategory(quiz.category, quiz.subcategory)) {
+    errors.subcategory = '선택한 카테고리에 맞는 세부 분류를 골라 주세요.';
+  }
+
+  const tags = cleanTags(quiz.tags);
+  if (tags.length > LIMITS.tagsMax) errors.tags = `태그는 최대 ${LIMITS.tagsMax}개까지 붙일 수 있습니다.`;
+  else if (tags.some((t) => len(t) > LIMITS.tagMax)) errors.tags = `태그 하나는 ${LIMITS.tagMax}자 이하로 입력해 주세요.`;
 
   const questions = Array.isArray(quiz.questions) ? quiz.questions : [];
   if (questions.length < LIMITS.questionsMin) errors.questions = '문제를 최소 1개 이상 추가해 주세요.';
@@ -84,4 +92,23 @@ export function parseAltAnswers(text) {
     .split(',')
     .map((s) => s.trim())
     .filter(Boolean);
+}
+
+// 태그 정리: 앞의 # 제거, 앞뒤 공백 제거, 빈 값·중복(대소문자/띄어쓰기 무시) 제거
+export function cleanTags(tags) {
+  const seen = new Set();
+  const out = [];
+  for (const raw of Array.isArray(tags) ? tags : []) {
+    const tag = String(raw ?? '').replace(/^#+/, '').trim().replace(/\s+/g, ' ');
+    const key = tag.toLowerCase().replace(/\s+/g, '');
+    if (!tag || seen.has(key)) continue;
+    seen.add(key);
+    out.push(tag);
+  }
+  return out;
+}
+
+// "발라드, #OST, 2000년대" → ["발라드", "OST", "2000년대"]
+export function parseTags(text) {
+  return cleanTags(String(text ?? '').split(/[,，]/));
 }

@@ -8,10 +8,11 @@ import { LIMITS } from '../utils/constants.js';
 
 const KEY = 'quizbang.demo.quizzes';
 const DELETED_KEY = 'quizbang.demo.deleted';
+const SEED_VERSION_KEY = 'quizbang.demo.seedVersion';
 export const SAMPLE_OWNER = 'sample-owner';
 const URL_OPTS = { demo: true }; // 데모 모드는 브라우저에 저장한 data: 이미지만 허용
 
-export function createDemoRepo({ storage = globalThis.localStorage, seed = [] } = {}) {
+export function createDemoRepo({ storage = globalThis.localStorage, seed = [], seedVersion = '1' } = {}) {
   const memory = {};
   const store = storage || {
     getItem: (k) => memory[k] ?? null,
@@ -39,15 +40,23 @@ export function createDemoRepo({ storage = globalThis.localStorage, seed = [] } 
 
   function all() {
     let data = load(KEY, null);
-    if (!data) {
-      // 처음 실행 시 샘플 퀴즈를 넣어 둡니다(플레이 수 0 에서 시작).
-      data = {};
+    // 처음 실행했거나 샘플 퀴즈 내용이 바뀌었으면 샘플을 넣거나 새 내용으로 갱신합니다.
+    // (플레이 수와 처음 등록 시각은 유지, 사용자가 만든 퀴즈는 건드리지 않음)
+    let version = null;
+    try { version = store.getItem(SEED_VERSION_KEY); } catch { /* 무시 */ }
+    if (!data || version !== seedVersion) {
+      data = data || {};
       const now = Date.now();
       seed.forEach((s, i) => {
+        const old = data[s.id];
         const at = new Date(now - (i + 1) * 60000).toISOString();
-        data[s.id] = { ...s.fields, ownerUid: SAMPLE_OWNER, status: 'active', playCount: 0, createdAt: at, updatedAt: at };
+        data[s.id] = {
+          ...s.fields, ownerUid: SAMPLE_OWNER, status: 'active',
+          playCount: old?.playCount || 0, createdAt: old?.createdAt || at, updatedAt: old ? new Date(now).toISOString() : at,
+        };
       });
       save(KEY, data);
+      try { store.setItem(SEED_VERSION_KEY, seedVersion); } catch { /* 무시 */ }
     }
     return data;
   }

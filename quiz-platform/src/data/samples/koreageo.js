@@ -6,6 +6,8 @@ export default {
   title: '우리나라 지리 50제: 산·강·섬·도시',
   description: '백두산부터 마라도까지! 우리나라의 산, 강, 섬, 도시와 지역 특산물을 맞혀 보세요.',
   category: 'geography',
+  subcategory: 'korea',
+  tags: ['산', '강', '섬'],
   imageUrl: '',
   questions: [
     t('남한에서 가장 높은 산은?', '한라산'),

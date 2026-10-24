@@ -51,7 +51,10 @@ service cloud.firestore {
         && d.isPublic is bool
         && d.questions is list && d.questions.size() >= 1 && d.questions.size() <= 100
         && d.questionCount is int && d.questionCount == d.questions.size()
-        && d.searchTokens is list && d.searchTokens.size() <= 200
+        && d.searchTokens is list && d.searchTokens.size() <= 300
+        // 세부 분류(영문 키, 없으면 '')와 태그(최대 5개)
+        && (!('subcategory' in d) || (d.subcategory is string && d.subcategory.matches('^[a-z0-9]{0,20}$')))
+        && (!('tags' in d) || (d.tags is list && d.tags.size() <= 5))
         // 첫 문제는 형식 검사 (나머지 문제는 규칙 한계로 클라이언트 + 문서 크기 제한(1MB)에 의존)
         && d.questions[0] is map
         && d.questions[0].question is string && d.questions[0].question.size() >= 1
@@ -61,7 +64,7 @@ service cloud.firestore {
     }
 
     function allowedKeys() {
-      return ['title', 'description', 'category', 'imageUrl', 'isPublic', 'questions',
+      return ['title', 'description', 'category', 'subcategory', 'tags', 'imageUrl', 'isPublic', 'questions',
               'questionCount', 'searchTokens', 'ownerUid', 'status', 'playCount',
               'createdAt', 'updatedAt'];
     }

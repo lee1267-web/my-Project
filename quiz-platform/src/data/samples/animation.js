@@ -6,6 +6,8 @@ export default {
   title: '애니메이션 50제: 지브리·디즈니·일본 만화',
   description: '지브리, 디즈니·픽사, 일본 인기 애니와 한국 추억의 만화까지! 캐릭터와 제작자를 맞혀 보세요.',
   category: 'anime',
+  subcategory: '',
+  tags: ['지브리', '디즈니', '일본 애니'],
   imageUrl: '',
   questions: [
     t('「이웃집 토토로」, 「센과 치히로의 행방불명」의 감독은?', '미야자키 하야오', ['미야자키']),

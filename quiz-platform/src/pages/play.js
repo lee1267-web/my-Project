@@ -1,7 +1,7 @@
 // 퀴즈 풀기 화면 (/quiz/:id) — 공유 링크로 들어오는 곳입니다.
 // 주소의 ID 로 DB 에서 퀴즈를 직접 조회하므로, 다른 브라우저·기기에서도 같은 퀴즈가 열립니다.
 import { h, clear, setTitle, formatDate } from '../utils/dom.js';
-import { getCategory } from '../utils/constants.js';
+import { getCategory, getSubcategory } from '../utils/constants.js';
 import { getPlayableQuiz, recordPlay } from '../services/quizService.js';
 import { getCurrentUid } from '../services/auth.js';
 import { isCorrect, SKIPPED } from '../utils/grading.js';
@@ -51,12 +51,14 @@ export async function render(container, ctx) {
         thumbnail(quiz, 'intro-thumb'),
         h('div', { class: 'intro-body' },
           h('div', { class: 'badges' },
-            h('span', { class: 'badge badge-category' }, `${cat.emoji} ${cat.label}`),
+            h('span', { class: 'badge badge-category' }, `${cat.emoji} ${cat.label}${getSubcategory(quiz.category, quiz.subcategory) ? ` · ${getSubcategory(quiz.category, quiz.subcategory).label}` : ''}`),
             quiz.isPublic ? null : h('span', { class: 'badge badge-private' }, '🔒 비공개'),
             isOwner ? h('span', { class: 'badge badge-owner' }, '내 퀴즈') : null,
           ),
           h('h1', { class: 'intro-title' }, quiz.title),
           quiz.description ? h('p', { class: 'intro-desc' }, quiz.description) : null,
+          // 태그를 누르면 그 태그로 검색
+          quiz.tags.length ? h('p', { class: 'tag-list' }, quiz.tags.map((t) => h('a', { class: 'tag', href: `/?q=${encodeURIComponent(t)}` }, `#${t}`))) : null,
           h('p', { class: 'card-meta' },
             h('span', {}, `문제 ${total}개`),
             h('span', {}, `플레이 ${quiz.playCount.toLocaleString('ko-KR')}회`),

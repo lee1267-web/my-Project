@@ -67,3 +67,20 @@ describe('데모 저장소 (Firestore 와 같은 동작)', () => {
     expect(await repo.listMyQuizzes('u1')).toHaveLength(2);
   });
 });
+
+describe('데모 샘플 갱신', () => {
+  it('샘플 버전이 바뀌면 플레이 수는 유지하고 내용만 새로 바뀐다', async () => {
+    const mem = {};
+    const storage = { getItem: (k) => mem[k] ?? null, setItem: (k, v) => { mem[k] = String(v); } };
+    const id = 'SampleAAAAAAAAAAAAAA';
+    const r1 = createDemoRepo({ storage, seed: [{ id, fields: fields({ title: '옛 제목' }) }], seedVersion: '1' });
+    await r1.incrementPlayCount(id);
+    const mine = r1.newQuizId();
+    await r1.createQuiz(mine, fields({ title: '내 퀴즈' }), 'u1');
+    const r2 = createDemoRepo({ storage, seed: [{ id, fields: fields({ title: '새 제목' }) }], seedVersion: '2' });
+    const q = await r2.getQuiz(id);
+    expect(q.title).toBe('새 제목');
+    expect(q.playCount).toBe(1);
+    expect((await r2.getQuiz(mine, 'u1')).title).toBe('내 퀴즈');
+  });
+});

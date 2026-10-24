@@ -6,6 +6,8 @@ export default {
   title: '클래식 음악 50제: 작곡가와 명곡',
   description: '베토벤, 모차르트, 쇼팽부터 조성진·임윤찬까지! 클래식 음악 상식과 음악 용어 50문제.',
   category: 'music',
+  subcategory: 'classical',
+  tags: ['작곡가', '음악 용어'],
   imageUrl: '',
   questions: [
     t('교향곡 「운명」을 작곡한 사람은?', '베토벤'),

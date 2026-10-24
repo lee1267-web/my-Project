@@ -6,6 +6,8 @@ export default {
   title: '동물·자연 상식 50제',
   description: '가장 빠른 동물, 가장 큰 꽃, 날씨와 자연 현상까지! 생물과 자연에 대한 50문제.',
   category: 'science',
+  subcategory: 'nature',
+  tags: ['동물', '식물', '날씨'],
   imageUrl: '',
   questions: [
     t('지구에서 가장 큰 동물은?', '흰긴수염고래', ['대왕고래', '흰수염고래']),

@@ -1,7 +1,8 @@
 // 홈: 서비스 소개 + 공개 퀴즈 둘러보기(검색 / 카테고리 / 정렬 / 더 보기)
 import { h, clear, setTitle } from '../utils/dom.js';
-import { CATEGORIES, CATEGORY_KEYS } from '../utils/constants.js';
+import { CATEGORIES, CATEGORY_KEYS, getCategory, getSubcategory } from '../utils/constants.js';
 import { listPublicQuizzes } from '../services/quizService.js';
+import { findCategoryForTerm } from '../utils/search.js';
 import { quizCard, skeletonCards } from '../components/quizCard.js';
 import { toAppError } from '../utils/errors.js';
 
@@ -10,11 +11,14 @@ export async function render(container, { query }) {
   const state = {
     search: (query.q || '').slice(0, 50),
     category: CATEGORY_KEYS.includes(query.cat) ? query.cat : '',
+    sub: '',
     sort: query.sort === 'popular' ? 'popular' : 'latest',
     cursor: null,
     loading: false,
     requestId: 0,
   };
+
+  if (getSubcategory(state.category, query.sub)) state.sub = query.sub;
 
   // ── 소개 영역 ──
   const hero = h('section', { class: 'hero' },
@@ -37,7 +41,7 @@ export async function render(container, { query }) {
 
   // ── 검색/필터 영역 ──
   const searchInput = h('input', {
-    type: 'search', id: 'search', class: 'input', placeholder: '퀴즈 제목으로 검색 (예: 한국사)', value: state.search,
+    type: 'search', id: 'search', class: 'input', placeholder: '제목·장르·태그로 검색 (예: 발라드, 게임, 노래)', value: state.search,
     maxlength: '50', autocomplete: 'off', enterkeyhint: 'search',
   });
   const searchForm = h('form', { class: 'search-form', role: 'search' },
@@ -51,17 +55,53 @@ export async function render(container, { query }) {
     reload();
   });
 
+  // 추천 검색어: 누르면 바로 검색 (분류 이름·별칭으로도 찾을 수 있다는 것을 알려 줌)
+  const SUGGESTIONS = ['노래', '발라드', '게임', '아이돌', '한국사', '축구', '애니', '영어'];
+  const suggestBox = h('p', { class: 'suggest' },
+    h('span', { class: 'muted' }, '추천 검색어 '),
+    SUGGESTIONS.map((word) => h('button', {
+      type: 'button', class: 'suggest-chip',
+      onclick: () => {
+        searchInput.value = word;
+        state.search = word;
+        reload();
+      },
+    }, `#${word}`)),
+  );
+
   const chipList = h('div', { class: 'chips', role: 'group', 'aria-label': '카테고리' });
+  const subList = h('div', { class: 'chips chips-sub', role: 'group', 'aria-label': '세부 분류' });
   const makeChip = (key, label) => {
     const chip = h('button', { type: 'button', class: 'chip', 'aria-pressed': String(state.category === key), dataset: { key } }, label);
     chip.addEventListener('click', () => {
       state.category = key;
+      state.sub = '';
       chipList.querySelectorAll('.chip').forEach((c) => c.setAttribute('aria-pressed', String(c.dataset.key === key)));
+      renderSubChips();
       reload();
     });
     return chip;
   };
   chipList.append(makeChip('', '전체'), ...CATEGORIES.map((c) => makeChip(c.key, `${c.emoji} ${c.label}`)));
+
+  // 카테고리를 고르면 그 아래 세부 분류(예: 음악 > 발라드) 버튼을 보여줍니다.
+  function renderSubChips() {
+    clear(subList);
+    subList.hidden = !state.category;
+    if (!state.category) return;
+    const cat = getCategory(state.category);
+    const makeSub = (key, label) => {
+      const chip = h('button', { type: 'button', class: 'chip chip-sm', 'aria-pressed': String(state.sub === key), dataset: { sub: key } }, label);
+      chip.addEventListener('click', () => {
+        state.sub = key;
+        subList.querySelectorAll('.chip').forEach((c) => c.setAttribute('aria-pressed', String(c.dataset.sub === key)));
+        reload();
+      });
+      return chip;
+    };
+    subList.append(makeSub('', `${cat.label} 전체`), ...cat.subs.map((x) => makeSub(x.key, x.label)));
+  }
+  renderSubChips();
 
   const sortSelect = h('select', { id: 'sort', class: 'select' },
     h('option', { value: 'latest', selected: state.sort === 'latest' }, '최신순'),
@@ -73,6 +113,31 @@ export async function render(container, { query }) {
   });
 
   const summary = h('p', { class: 'list-summary', 'aria-live': 'polite' });
+  // "게임"처럼 분류 이름으로 검색했을 때: 제목에 그 단어만 들어간 다른 분류 퀴즈도 나오므로
+  // 정확히 그 분류만 보는 버튼을 제공합니다.
+  const categoryHint = h('div', { class: 'category-hint', hidden: true });
+  function renderCategoryHint() {
+    clear(categoryHint);
+    const found = state.search ? findCategoryForTerm(state.search) : null;
+    const already = found && state.category === found.category && (state.sub || '') === found.subcategory;
+    categoryHint.hidden = !found || already;
+    if (!found || already) return;
+    categoryHint.append(
+      h('span', {}, `"${state.search}" 분류의 퀴즈만 볼까요?`),
+      h('button', {
+        type: 'button', class: 'btn btn-primary btn-sm',
+        onclick: () => {
+          state.category = found.category;
+          state.sub = found.subcategory;
+          state.search = '';
+          searchInput.value = '';
+          chipList.querySelectorAll('.chip').forEach((c) => c.setAttribute('aria-pressed', String(c.dataset.key === found.category)));
+          renderSubChips();
+          reload();
+        },
+      }, `${found.label}만 보기`),
+    );
+  }
   const grid = h('ul', { class: 'quiz-grid', 'aria-busy': 'false' });
   const moreBtn = h('button', { type: 'button', class: 'btn btn-ghost btn-block more-btn', hidden: true }, '더 보기');
   moreBtn.addEventListener('click', () => load(false));
@@ -84,7 +149,10 @@ export async function render(container, { query }) {
       h('div', { class: 'sort-box' }, h('label', { for: 'sort', class: 'sr-only' }, '정렬'), sortSelect),
     ),
     searchForm,
+    suggestBox,
     chipList,
+    subList,
+    categoryHint,
     summary,
     grid,
     stateBox,
@@ -97,6 +165,7 @@ export async function render(container, { query }) {
     const params = new URLSearchParams();
     if (state.search) params.set('q', state.search);
     if (state.category) params.set('cat', state.category);
+    if (state.sub) params.set('sub', state.sub);
     if (state.sort !== 'latest') params.set('sort', state.sort);
     const qs = params.toString();
     history.replaceState(null, '', qs ? `/?${qs}` : '/');
@@ -104,6 +173,7 @@ export async function render(container, { query }) {
 
   function reload() {
     syncUrl();
+    renderCategoryHint();
     load(true);
   }
 
@@ -119,7 +189,7 @@ export async function render(container, { query }) {
     moreBtn.textContent = '불러오는 중...';
     grid.setAttribute('aria-busy', 'true');
     try {
-      const res = await listPublicQuizzes({ category: state.category, search: state.search, sort: state.sort, cursor: state.cursor });
+      const res = await listPublicQuizzes({ category: state.category, subcategory: state.sub, search: state.search, sort: state.sort, cursor: state.cursor });
       if (id !== state.requestId) return; // 더 최근 요청이 있으면 무시
       if (reset) clear(grid);
       grid.append(...res.items.map(quizCard));
@@ -144,16 +214,18 @@ export async function render(container, { query }) {
 
   function showEmpty() {
     const filtered = state.search || state.category;
+    const where = [state.category && getCategory(state.category).label, getSubcategory(state.category, state.sub)?.label, state.search && `"${state.search}"`].filter(Boolean).join(' · ');
     clear(stateBox).append(
       h('div', { class: 'empty-state' },
         h('div', { class: 'state-icon', 'aria-hidden': 'true' }, filtered ? '🔎' : '📝'),
-        h('h3', {}, filtered ? '조건에 맞는 퀴즈가 없어요' : '아직 공개된 퀴즈가 없어요'),
+        h('h3', {}, filtered ? `${where} 퀴즈가 아직 없어요` : '아직 공개된 퀴즈가 없어요'),
         h('p', {}, filtered
-          ? '검색어나 카테고리를 바꿔 보세요. 검색은 제목 단어의 앞부분으로 찾습니다. (예: "한국사" → "한국" O, "국사" X)'
+          ? '첫 번째로 만들어 보는 건 어때요? 검색은 제목·분류·태그 단어의 앞부분으로 찾습니다. (예: "한국사" → "한국" O, "국사" X)'
           : '첫 번째 퀴즈를 만들어 친구들과 공유해 보세요!'),
-        filtered
-          ? h('button', { type: 'button', class: 'btn btn-ghost', onclick: resetFilters }, '검색 조건 초기화')
-          : h('a', { href: '/create', class: 'btn btn-primary' }, '퀴즈 만들기'),
+        h('div', { class: 'state-actions' },
+          h('a', { href: createLink(), class: 'btn btn-primary' }, '퀴즈 만들기'),
+          filtered ? h('button', { type: 'button', class: 'btn btn-ghost', onclick: resetFilters }, '검색 조건 초기화') : null,
+        ),
       ),
     );
   }
@@ -169,14 +241,26 @@ export async function render(container, { query }) {
     );
   }
 
+  // 보고 있던 분류를 만들기 화면에 미리 채워 줍니다. (예: 음악 > 발라드)
+  function createLink() {
+    const p = new URLSearchParams();
+    if (state.category) p.set('cat', state.category);
+    if (state.sub) p.set('sub', state.sub);
+    const qs = p.toString();
+    return qs ? `/create?${qs}` : '/create';
+  }
+
   function resetFilters() {
     state.search = '';
     state.category = '';
+    state.sub = '';
+    renderSubChips();
     searchInput.value = '';
     chipList.querySelectorAll('.chip').forEach((c) => c.setAttribute('aria-pressed', String(c.dataset.key === '')));
     reload();
   }
 
+  renderCategoryHint();
   load(true);
 }
 

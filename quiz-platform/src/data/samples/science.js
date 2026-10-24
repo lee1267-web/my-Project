@@ -6,6 +6,8 @@ export default {
   title: '과학 상식 50제: 원소부터 우주까지',
   description: '원소 기호, 태양계, 인체, 유명한 과학자까지! 중고등 과학 수준의 50문제.',
   category: 'science',
+  subcategory: 'general',
+  tags: ['원소', '태양계', '과학자'],
   imageUrl: '',
   questions: [
     t('물의 화학식은?', 'H2O'),

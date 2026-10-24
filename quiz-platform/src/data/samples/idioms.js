@@ -6,6 +6,8 @@ export default {
   title: '사자성어·고사성어 50제',
   description: '뜻풀이를 보고 사자성어를 맞혀 보세요. 주관식은 한글 네 글자로 입력하면 됩니다.',
   category: 'language',
+  subcategory: 'idioms',
+  tags: ['고사성어', '한자'],
   imageUrl: '',
   questions: [
     t('돌 하나로 새 두 마리를 잡는다. 한 가지 일로 두 가지 이득을 봄.', '일석이조', ['일거양득']),

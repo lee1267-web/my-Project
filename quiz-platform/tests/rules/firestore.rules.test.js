@@ -16,7 +16,7 @@ const ID2 = 'ZyXwVuTsRqPoNmLkJiHg';
 
 function quizData(owner, over = {}) {
   return {
-    title: '테스트', description: '', category: 'general', imageUrl: '', isPublic: true,
+    title: '테스트', description: '', category: 'general', subcategory: 'life', tags: ['태그'], imageUrl: '', isPublic: true,
     questions: [{ id: 'q1', type: 'text', question: '문제', answer: '정답', altAnswers: [], options: [], imageUrl: '', order: 0 }],
     questionCount: 1, searchTokens: ['테', '테스', '테스트'],
     ownerUid: owner, status: 'active', playCount: 0,
@@ -120,6 +120,12 @@ describe('생성', () => {
     await assertSucceeds(setDoc(doc(alice(), 'quizzes', ID), quizData('alice', { title: '가'.repeat(100), description: '설'.repeat(500) })));
     await assertSucceeds(setDoc(doc(alice(), 'quizzes', ID2), quizData('alice', { title: '🎵'.repeat(50) })));
     await assertFails(setDoc(doc(alice(), 'quizzes', 'ZZZZZZZZZZZZZZZZZZZZ'), quizData('alice', { title: '🎵'.repeat(51) })));
+  });
+  it('세부 분류·태그 형식 검사 (태그 6개 이상, 잘못된 세부 분류 키는 거부)', async () => {
+    await assertFails(setDoc(doc(alice(), 'quizzes', ID), quizData('alice', { tags: ['1', '2', '3', '4', '5', '6'] })));
+    await assertFails(setDoc(doc(alice(), 'quizzes', ID), quizData('alice', { tags: '발라드' })));
+    await assertFails(setDoc(doc(alice(), 'quizzes', ID), quizData('alice', { subcategory: '<script>' })));
+    await assertSucceeds(setDoc(doc(alice(), 'quizzes', ID), quizData('alice', { subcategory: '', tags: [] })));
   });
   it('시간을 클라이언트 값으로 조작하면 거부', async () => {
     await assertFails(setDoc(doc(alice(), 'quizzes', ID), quizData('alice', { createdAt: new Date('2000-01-01') })));

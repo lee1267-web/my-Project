@@ -27,24 +27,106 @@ export async function run() {
   });
 
   await step('홈: 검색어 / 카테고리 필터 / 정렬 / 빈 결과', async () => {
-    await page.getByLabel('퀴즈 검색').fill('한국');
+    await page.getByLabel('퀴즈 검색').fill('한국사');
     await page.getByRole('button', { name: '검색', exact: true }).click();
     await page.waitForFunction(() => document.querySelector('.quiz-grid')?.getAttribute('aria-busy') === 'false');
     const titles = await page.locator('.card-title').allTextContents();
-    assert.ok(titles.length >= 1 && titles.every((t) => t.includes('한국')), titles.join());
-    assert.match(page.url(), /q=%ED%95%9C%EA%B5%AD/);
+    assert.ok(titles.some((t) => t.includes('한국사 50제')), titles.join());
+    assert.match(page.url(), /q=%ED%95%9C%EA%B5%AD%EC%82%AC/);
     await page.getByLabel('퀴즈 검색').fill('존재하지않는검색어');
     await page.getByRole('button', { name: '검색', exact: true }).click();
-    await page.getByText('조건에 맞는 퀴즈가 없어요').waitFor();
+    await page.getByText(/퀴즈가 아직 없어요/).waitFor();
     await page.getByRole('button', { name: '검색 조건 초기화' }).click();
     await page.locator('.quiz-card:not(.skeleton)').first().waitFor();
-    await page.getByRole('button', { name: /아이돌/ }).click();
+    await page.locator('.chips .chip', { hasText: '아이돌' }).click();
     await page.waitForFunction(() => document.querySelector('.quiz-grid')?.getAttribute('aria-busy') === 'false');
     const badges = await page.locator('.quiz-card .badge-category').allTextContents();
     assert.ok(badges.length >= 1 && badges.every((b) => b.includes('아이돌')), badges.join());
     await page.getByLabel('정렬').selectOption('popular');
     assert.match(page.url(), /sort=popular/);
     await page.getByRole('button', { name: '전체', exact: true }).click();
+  });
+
+  // 검색 결과가 모두 그려질 때까지 기다린 뒤 카드의 분류 배지 목록을 돌려줌
+  const searchFor = async (word) => {
+    await page.goto(`${BASE}/?q=${encodeURIComponent(word)}`);
+    await page.waitForFunction(() => document.querySelector('.quiz-grid')?.getAttribute('aria-busy') === 'false');
+    return {
+      badges: await page.locator('.quiz-card .badge-category').allTextContents(),
+      titles: await page.locator('.quiz-card .card-title').allTextContents(),
+    };
+  };
+
+  await step('분류 검색: "발라드" → 발라드 퀴즈만', async () => {
+    const { badges, titles } = await searchFor('발라드');
+    assert.ok(titles.some((t) => t.includes('발라드 명곡')), titles.join());
+    assert.ok(badges.length >= 1 && badges.every((b) => b.includes('발라드')), badges.join());
+  });
+
+  await step('분류 검색: "게임" → 게임 분류 + 제목에 "게임"이 든 퀴즈, "게임만 보기"로 정확히 좁히기', async () => {
+    const { badges, titles } = await searchFor('게임');
+    assert.ok(badges.some((b) => b.includes('🎮 게임')), badges.join());
+    badges.forEach((b, i) => assert.ok(b.includes('게임') || titles[i].includes('게임'), `${titles[i]} / ${b}`));
+    await page.getByRole('button', { name: /게임만 보기/ }).click();
+    await page.waitForFunction(() => document.querySelector('.quiz-grid')?.getAttribute('aria-busy') === 'false');
+    assert.match(page.url(), /cat=game/);
+    const only = await page.locator('.quiz-card .badge-category').allTextContents();
+    assert.ok(only.length >= 1 && only.every((b) => b.includes('🎮 게임')), only.join());
+  });
+
+  await step('분류 검색: "노래" → 음악·아이돌 퀴즈 (발라드·민요·클래식·아이돌 포함)', async () => {
+    const { badges, titles } = await searchFor('노래');
+    assert.ok(badges.every((b) => b.includes('음악') || b.includes('아이돌')), badges.join());
+    for (const want of ['발라드', '가사 보고', '클래식', '아이돌']) assert.ok(titles.some((t) => t.includes(want)), `${want} 없음: ${titles.join()}`);
+  });
+
+  await step('세부 분류 버튼: 음악 → 발라드 / 음악 → 트로트(없으면 안내 + 만들기 버튼)', async () => {
+    await page.goto(BASE);
+    await page.locator('.quiz-card:not(.skeleton)').first().waitFor();
+    assert.ok(await page.locator('.chips-sub').isHidden(), '카테고리 선택 전에는 세부 분류 숨김');
+    await page.locator('.chips .chip', { hasText: '음악' }).first().click();
+    await page.locator('.chips-sub').waitFor();
+    await page.locator('.chips-sub .chip', { hasText: '발라드' }).click();
+    await page.waitForFunction(() => document.querySelector('.quiz-grid')?.getAttribute('aria-busy') === 'false');
+    assert.match(page.url(), /cat=music&sub=ballad/);
+    const badges = await page.locator('.quiz-card .badge-category').allTextContents();
+    assert.ok(badges.length === 1 && badges[0].includes('음악 · 발라드'), badges.join());
+    await page.locator('.chips-sub .chip', { hasText: '트로트' }).click();
+    await page.getByText('음악 · 트로트 퀴즈가 아직 없어요').waitFor();
+    const link = page.locator('.empty-state a', { hasText: '퀴즈 만들기' });
+    assert.equal(await link.getAttribute('href'), '/create?cat=music&sub=trot');
+  });
+
+  await step('"직접 만들기" 버튼: 홈 오른쪽 아래 → 보던 분류가 채워진 만들기 화면, 만들기 화면에서는 숨김', async () => {
+    await page.goto(`${BASE}/?cat=music&sub=ballad`);
+    const fab = page.locator('.fab');
+    await fab.waitFor();
+    const box = await fab.boundingBox();
+    const vp = page.viewportSize();
+    assert.ok(box.x + box.width > vp.width - 40 && box.y + box.height > vp.height - 40, `위치 ${JSON.stringify(box)}`);
+    await fab.click();
+    await page.waitForURL(/\/create\?cat=music&sub=ballad$/);
+    assert.equal(await page.getByLabel('카테고리').inputValue(), 'music');
+    assert.equal(await page.locator('#f-sub').inputValue(), 'ballad');
+    assert.ok(await fab.isHidden(), '만들기 화면에서는 숨김');
+    await page.goto(`${BASE}/my`);
+    assert.ok(await fab.isVisible(), '내 퀴즈 화면에서는 보임');
+  });
+
+  await step('만들 때 고른 세부 분류·태그로 검색됨', async () => {
+    await page.goto(`${BASE}/create`);
+    await fillQuiz(page, { title: '추억의 노래방 퀴즈', category: 'music', questions: [{ type: 'text', question: 'q', answer: 'a' }] });
+    await page.locator('#f-sub').selectOption('trot');
+    await page.getByLabel('태그 (선택)').fill('#노래방, 7080, 노래방');
+    const id = await saveQuiz(page);
+    assert.match(await page.locator('.intro-card').textContent(), /음악 · 트로트[\s\S]*#노래방[\s\S]*#7080/);
+    for (const word of ['트로트', '7080', '노래방', '노래']) {
+      const { titles } = await searchFor(word);
+      assert.ok(titles.includes('추억의 노래방 퀴즈'), `"${word}" 검색 결과에 없음`);
+    }
+    await page.goto(`${BASE}/quiz/${id}`);
+    await page.locator('.intro-card a.tag', { hasText: '#7080' }).click();
+    await page.waitForURL(/\?q=7080/);
   });
 
   await step('만들기: 빈 값으로 저장하면 한국어 오류가 필드 근처에 표시', async () => {

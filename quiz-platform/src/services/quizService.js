@@ -6,11 +6,13 @@ import { createDemoRepo } from './demoRepo.js';
 import { toEditableFields } from './quizModel.js';
 import { uploadQuizImage, deleteImageUrls, deleteQuizFolder } from './storageService.js';
 import { AppError } from '../utils/errors.js';
-import { QUIZ_ID_PATTERN } from '../utils/constants.js';
-import { parseSearchTerm, matchesSearch } from '../utils/search.js';
+import { QUIZ_ID_PATTERN, getSubcategory } from '../utils/constants.js';
+import { parseSearchTerm, matchesSearch, subToken } from '../utils/search.js';
 import { validateQuiz } from '../utils/validation.js';
 
 const loadSamples = () => import('../data/samples/index.js').then((m) => m.SAMPLE_QUIZZES);
+// 샘플 퀴즈 내용을 바꾸면 이 값을 올리세요. 데모 모드 브라우저의 샘플이 새 내용으로 갱신됩니다.
+const SAMPLE_VERSION = '2026-10-categories';
 
 // 데모 모드는 처음 실행할 때 샘플 퀴즈를 넣어 두기 위해 샘플 파일을 불러옵니다.
 let repoPromise = null;
@@ -18,7 +20,10 @@ function getRepo() {
   if (!repoPromise) {
     repoPromise = IS_DEMO
       ? loadSamples().then((samples) =>
-          createDemoRepo({ seed: samples.map((s) => ({ id: s.demoId, fields: toEditableFields(s) })) }))
+          createDemoRepo({
+            seed: samples.map((s) => ({ id: s.demoId, fields: toEditableFields(s) })),
+            seedVersion: SAMPLE_VERSION,
+          }))
       : import('./firestoreRepo.js');
   }
   return repoPromise;
@@ -43,10 +48,15 @@ export async function getPlayableQuiz(id) {
 }
 
 // search: 사용자가 입력한 검색어. 첫 단어는 DB 에서, 나머지 단어는 받아온 결과에서 거릅니다.
-export async function listPublicQuizzes({ category = '', search = '', sort = 'latest', cursor = null } = {}) {
+// subcategory: 세부 분류 버튼으로 고른 값 (예: 'ballad'). 고르면 그 분류로 정확히 거르고,
+//              검색어의 모든 단어는 받아온 결과에서 다시 거릅니다.
+export async function listPublicQuizzes({ category = '', subcategory = '', search = '', sort = 'latest', cursor = null } = {}) {
   const parsed = parseSearchTerm(search);
-  const res = await (await getRepo()).listPublicQuizzes({ category, token: parsed?.primary, sort, cursor });
-  return { ...res, items: res.items.filter((q) => matchesSearch(q, parsed)) };
+  const useSub = Boolean(category && getSubcategory(category, subcategory));
+  const token = useSub ? subToken(subcategory) : parsed?.primary;
+  const res = await (await getRepo()).listPublicQuizzes({ category, token, sort, cursor });
+  const words = useSub && parsed ? { primary: parsed.primary, rest: parsed.rest } : parsed;
+  return { ...res, items: res.items.filter((q) => matchesSearch(q, words)) };
 }
 
 export async function listMyQuizzes() {

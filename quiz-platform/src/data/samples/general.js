@@ -6,6 +6,8 @@ export default {
   title: '생활 상식 50제: 알면 알수록 쓸모 있는',
   description: '화폐 속 인물, 기념일, 신고 번호, 게임 규칙까지! 일상에서 만나는 상식 50문제.',
   category: 'general',
+  subcategory: 'life',
+  tags: ['기념일', '화폐'],
   imageUrl: '',
   questions: [
     c('평년(윤년이 아닌 해)은 1년이 며칠일까요?', '365일', ['360일', '364일', '365일', '366일']),
