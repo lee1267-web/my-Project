@@ -49,6 +49,8 @@ h1, h2, h3 { line-height: 1.3; margin: 0 0 0.5em; }
 p { margin: 0 0 0.75em; }
 code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; background: var(--surface-2); padding: 0.1em 0.4em; border-radius: 6px; font-size: 0.9em; }
 :focus-visible { outline: none; box-shadow: var(--focus); border-radius: 6px; }
+/* 페이지 이동 시 스크린리더용으로 제목에 옮긴 포커스는 테두리를 표시하지 않음 */
+h1[tabindex='-1']:focus, h1[tabindex='-1']:focus-visible { box-shadow: none; }
 [hidden] { display: none !important; }
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
 .muted { color: var(--muted); }
@@ -241,7 +243,7 @@ main { flex: 1; outline: none; padding-bottom: 48px; }
 .code-list { padding-left: 20px; }
 
 /* 5) 페이지별 */
-.page-head { padding: 28px 0 8px; }
+.page-head { padding-top: 28px; padding-bottom: 8px; }
 .page-head.row { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-end; gap: 12px; padding-left: 0; padding-right: 0; }
 .page-title { font-size: clamp(1.5rem, 4vw, 2rem); margin-bottom: 4px; }
 .section-title { font-size: 1.25rem; margin: 0; }

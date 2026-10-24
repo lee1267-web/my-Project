@@ -15,7 +15,8 @@
     "dev:emulator": "vite --mode emulator",
     "test:e2e": "node tests/e2e/run-e2e.mjs",
     "deploy:rules": "firebase deploy --only firestore:rules,firestore:indexes,storage",
-    "deploy": "npm run build && firebase deploy --only hosting"
+    "deploy": "npm run build && firebase deploy --only hosting",
+    "test:e2e:emulator": "firebase emulators:exec --only auth,firestore,storage --project demo-quizbang \"node tests/e2e/run-e2e.mjs emulator\""
   },
   "dependencies": {
     "firebase": "^13.1.0"
