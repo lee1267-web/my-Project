@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:lan": "vite --host",
     "dev:demo": "vite --mode demo",
     "build": "vite build",
     "preview": "vite preview",
@@ -16,7 +17,8 @@
     "test:e2e": "node tests/e2e/run-e2e.mjs",
     "deploy:rules": "firebase deploy --only firestore:rules,firestore:indexes,storage",
     "deploy": "npm run build && firebase deploy --only hosting",
-    "test:e2e:emulator": "firebase emulators:exec --only auth,firestore,storage --project demo-quizbang \"node tests/e2e/run-e2e.mjs emulator\""
+    "test:e2e:emulator": "firebase emulators:exec --only auth,firestore,storage --project demo-quizbang \"node tests/e2e/run-e2e.mjs emulator\"",
+    "test:e2e:hosting": "vite build --mode demo && firebase emulators:exec --only hosting --project demo-quizbang \"node tests/e2e/run-e2e.mjs hosting\" && vite build"
   },
   "dependencies": {
     "firebase": "^13.1.0"

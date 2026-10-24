@@ -129,7 +129,7 @@ export async function render(container, ctx) {
   const counter = (input, max) => {
     const el = h('span', { class: 'counter', 'aria-hidden': 'true' });
     const update = () => {
-      const n = Array.from(input.value).length;
+      const n = input.value.length; // 보안 규칙과 같은 방식(이모지는 2글자)
       el.textContent = `${n}/${max}`;
       el.classList.toggle('over', n > max);
     };
@@ -207,7 +207,7 @@ export async function render(container, ctx) {
       h('span', { class: 'btn btn-ghost btn-sm', 'aria-hidden': 'true' }, label),
       h('span', { class: 'sr-only' }, label),
       input,
-      h('span', { class: 'hint' }, `JPG·PNG·WEBP·GIF, ${LIMITS.imageMaxBytes / 1024 / 1024}MB 이하`),
+      h('span', { class: 'hint' }, `JPG·PNG·WEBP·GIF, ${LIMITS.imageMaxBytes / 1024 / 1024}MB 미만`),
     );
   }
 

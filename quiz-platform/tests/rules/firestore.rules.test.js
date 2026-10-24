@@ -98,6 +98,29 @@ describe('생성', () => {
     const q0bad = [{ id: 'q', type: 'text', question: '', answer: 'a' }];
     await assertFails(setDoc(doc(alice(), 'quizzes', ID), quizData('alice', { questions: q0bad })));
   });
+  it('썸네일 주소: 외부 서버·localhost·남의 폴더는 거부, 내 Storage 주소는 허용', async () => {
+    const mine = 'https://firebasestorage.googleapis.com/v0/b/demo-quizbang.firebasestorage.app/o/quiz-images%2Falice%2FAbCdEfGhIjKlMnOpQrSt%2FAbCdEfGhIjKl.png?alt=media&token=1f2e3d4c-aaaa-bbbb-cccc-0123456789ab';
+    await assertFails(setDoc(doc(alice(), 'quizzes', ID), quizData('alice', { imageUrl: 'https://evil.example/track.png' })));
+    await assertFails(setDoc(doc(alice(), 'quizzes', ID), quizData('alice', { imageUrl: 'http://localhost:8080/admin' })));
+    await assertFails(setDoc(doc(alice(), 'quizzes', ID), quizData('alice', { imageUrl: mine.replace('Falice', 'Fbob') })));
+    await assertFails(setDoc(doc(alice(), 'quizzes', ID), quizData('alice', { imageUrl: `${mine}&x=https://evil.example` })));
+    await assertFails(setDoc(doc(alice(), 'quizzes', ID), quizData('alice', { imageUrl: mine.replace('https://firebasestorage.googleapis.com', 'https://firebasestorage.googleapis.com.evil.example') })));
+    await assertSucceeds(setDoc(doc(alice(), 'quizzes', ID), quizData('alice', { imageUrl: mine })));
+  });
+  it('첫 문제 이미지 주소도 같은 규칙 적용', async () => {
+    const q = (imageUrl) => [{ id: 'q1', type: 'text', question: '문제', answer: '정답', imageUrl }];
+    await assertFails(setDoc(doc(alice(), 'quizzes', ID), quizData('alice', { questions: q('https://evil.example/p.gif') })));
+    await assertSucceeds(setDoc(doc(alice(), 'quizzes', ID), quizData('alice', { questions: q('') })));
+  });
+  it('수정할 때도 외부 이미지 주소로 바꿀 수 없음', async () => {
+    await seed(ID2, quizData('alice'));
+    await assertFails(updateDoc(doc(alice(), 'quizzes', ID2), { imageUrl: 'https://evil.example/t.png', updatedAt: serverTimestamp() }));
+  });
+  it('글자 수 경계가 화면 검증과 같다: 한글 100자 허용, 이모지는 2글자로 계산', async () => {
+    await assertSucceeds(setDoc(doc(alice(), 'quizzes', ID), quizData('alice', { title: '가'.repeat(100), description: '설'.repeat(500) })));
+    await assertSucceeds(setDoc(doc(alice(), 'quizzes', ID2), quizData('alice', { title: '🎵'.repeat(50) })));
+    await assertFails(setDoc(doc(alice(), 'quizzes', 'ZZZZZZZZZZZZZZZZZZZZ'), quizData('alice', { title: '🎵'.repeat(51) })));
+  });
   it('시간을 클라이언트 값으로 조작하면 거부', async () => {
     await assertFails(setDoc(doc(alice(), 'quizzes', ID), quizData('alice', { createdAt: new Date('2000-01-01') })));
   });

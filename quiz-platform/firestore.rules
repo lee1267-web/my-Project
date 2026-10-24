@@ -30,9 +30,16 @@ service cloud.firestore {
                    'sports', 'science', 'geography', 'language', 'etc'];
     }
 
+    // 썸네일은 "비어 있음" 또는 "본인 업로드 폴더의 Firebase Storage 다운로드 주소"만 허용
+    // → 외부 추적 서버·localhost 주소 등으로 방문자 정보를 빼내는 것을 막습니다.
+    // (127.0.0.1:9199 는 로컬 Storage Emulator 주소. 실서비스에서는 의미 없는 주소라 허용해도 무해)
     function validImageUrl(u) {
+      let path = '/v0/b/[a-z0-9._-]+/o/quiz-images%2F' + request.auth.uid
+        + '%2F[A-Za-z0-9]{20}%2F[A-Za-z0-9]{12}\\.(jpg|png|webp|gif)\\?alt=media&token=[A-Za-z0-9-]+';
       return u is string && u.size() <= 2000
-        && (u == '' || u.matches('^https://.*') || u.matches('^http://(localhost|127\\.0\\.0\\.1)(:[0-9]+)?/.*'));
+        && (u == ''
+          || u.matches('https://firebasestorage\\.googleapis\\.com' + path)
+          || u.matches('http://127\\.0\\.0\\.1:9199' + path));
     }
 
     // 소유자가 쓸 수 있는 내용 필드 검증
@@ -49,7 +56,8 @@ service cloud.firestore {
         && d.questions[0] is map
         && d.questions[0].question is string && d.questions[0].question.size() >= 1
         && d.questions[0].answer is string && d.questions[0].answer.size() >= 1
-        && d.questions[0].type in ['text', 'choice'];
+        && d.questions[0].type in ['text', 'choice']
+        && (!('imageUrl' in d.questions[0]) || validImageUrl(d.questions[0].imageUrl));
     }
 
     function allowedKeys() {

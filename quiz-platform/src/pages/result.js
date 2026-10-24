@@ -1,6 +1,6 @@
 // 결과 화면 (/quiz/:id/result)
 import { h, clear, setTitle } from '../utils/dom.js';
-import { getQuiz } from '../services/quizService.js';
+import { getPlayableQuiz } from '../services/quizService.js';
 import { computeResult } from '../utils/grading.js';
 import { loadResult, clearResult, clearPlayState, quizVersion } from '../utils/playStorage.js';
 import { shareBox } from '../components/shareBox.js';
@@ -16,7 +16,7 @@ function resultMessage(score) {
 export async function render(container, ctx) {
   const id = ctx.params.id;
   container.append(h('div', { class: 'container page-loading' }, h('p', { class: 'loading-text' }, '결과를 불러오는 중...')));
-  const quiz = await getQuiz(id);
+  const quiz = await getPlayableQuiz(id);
   if (ctx.isStale()) return null;
   clear(container);
   setTitle(`${quiz.title} 결과`);

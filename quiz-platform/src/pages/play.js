@@ -2,7 +2,7 @@
 // 주소의 ID 로 DB 에서 퀴즈를 직접 조회하므로, 다른 브라우저·기기에서도 같은 퀴즈가 열립니다.
 import { h, clear, setTitle, formatDate } from '../utils/dom.js';
 import { getCategory } from '../utils/constants.js';
-import { getQuiz, recordPlay } from '../services/quizService.js';
+import { getPlayableQuiz, recordPlay } from '../services/quizService.js';
 import { getCurrentUid } from '../services/auth.js';
 import { isCorrect, SKIPPED } from '../utils/grading.js';
 import { thumbnail } from '../components/thumbnail.js';
@@ -13,7 +13,7 @@ import { savePlayState, loadPlayState, clearPlayState, saveResult, quizVersion }
 export async function render(container, ctx) {
   const id = ctx.params.id;
   container.append(h('div', { class: 'container page-loading' }, h('p', { class: 'loading-text' }, '퀴즈를 불러오는 중...')));
-  const quiz = await getQuiz(id);
+  const quiz = await getPlayableQuiz(id);
   const uid = await getCurrentUid();
   if (ctx.isStale()) return null;
   clear(container);

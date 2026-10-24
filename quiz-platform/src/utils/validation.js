@@ -4,7 +4,9 @@ import { LIMITS, CATEGORY_KEYS, IMAGE_TYPES } from './constants.js';
 // ⚠️ 클라이언트 검증은 사용자 편의를 위한 것이며 보안을 보장하지 않습니다.
 //    실제 방어는 firestore.rules / storage.rules 에서 다시 합니다.
 
-const len = (s) => Array.from(String(s ?? '')).length;
+// 글자 수는 JavaScript 의 length(UTF-16 단위)로 셉니다.
+// Firestore 보안 규칙의 size() 와 같은 방식이라, 이모지(🎵)는 2글자로 계산됩니다.
+const len = (s) => String(s ?? '').length;
 
 // quiz: { title, description, category, isPublic, questions: [{id,type,question,answer,altAnswers,options}] }
 // 반환: { valid, errors } — errors 의 key 는 필드 경로 (예: "questions.0.answer")
@@ -70,7 +72,8 @@ export function validateQuestion(q, prefix) {
 export function validateImageFile(file) {
   if (!file) return null;
   if (!IMAGE_TYPES.includes(file.type)) return 'JPG, PNG, WEBP, GIF 이미지만 올릴 수 있습니다.';
-  if (file.size > LIMITS.imageMaxBytes) return `이미지는 ${LIMITS.imageMaxBytes / 1024 / 1024}MB 이하만 올릴 수 있습니다.`;
+  // storage.rules 가 "2MB 미만"만 허용하므로 같은 기준으로 검사
+  if (file.size >= LIMITS.imageMaxBytes) return `이미지는 ${LIMITS.imageMaxBytes / 1024 / 1024}MB 미만만 올릴 수 있습니다.`;
   if (file.size === 0) return '빈 파일은 올릴 수 없습니다.';
   return null;
 }

@@ -36,7 +36,17 @@ async function withServer(mode, port, extraEnv, fn) {
 }
 
 let failed = 0;
-if (target === 'emulator') {
+if (target === 'hosting') {
+  // 실제 배포와 같은 Firebase Hosting 에뮬레이터(보안 헤더·CSP·새로고침 rewrites 적용)에서 데모 빌드 검사
+  process.env.BASE_URL = 'http://127.0.0.1:5000';
+  process.env.SHOT_DIR = `${SHOT_DIR}/hosting`;
+  mkdirSync(process.env.SHOT_DIR, { recursive: true });
+  const res = await fetch(`${process.env.BASE_URL}/quiz/AbCdEfGhIjKlMnOpQrSt`);
+  const csp = res.headers.get('content-security-policy') || '';
+  console.log(`\n[Hosting 에뮬레이터] /quiz/... 응답 ${res.status}, CSP ${csp ? '적용됨' : '없음'}`);
+  if (res.status !== 200 || !csp.includes("frame-ancestors 'none'")) failed++;
+  failed += await (await import('./demo.e2e.mjs')).run();
+} else if (target === 'emulator') {
   failed += await withServer('emulator', 5181, {}, async () => (await import('./firebase.e2e.mjs')).run());
 } else {
   failed += await withServer('demo', 5180, {}, async () => {

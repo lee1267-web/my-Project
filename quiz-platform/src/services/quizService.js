@@ -35,6 +35,13 @@ export async function getQuiz(id) {
   return (await getRepo()).getQuiz(id, uid);
 }
 
+// 풀기·결과 화면용: 풀 수 있는 문제가 하나도 없으면(손상된 데이터) 안내
+export async function getPlayableQuiz(id) {
+  const quiz = await getQuiz(id);
+  if (!quiz.questions.length) throw new AppError('unknown', '이 퀴즈에는 풀 수 있는 문제가 없어요. 제작자에게 문의해 주세요.');
+  return quiz;
+}
+
 // search: 사용자가 입력한 검색어. 첫 단어는 DB 에서, 나머지 단어는 받아온 결과에서 거릅니다.
 export async function listPublicQuizzes({ category = '', search = '', sort = 'latest', cursor = null } = {}) {
   const parsed = parseSearchTerm(search);

@@ -4,6 +4,7 @@ import {
   serverTimestamp, writeBatch, updateDoc, increment, setDoc,
 } from 'firebase/firestore';
 import { getFirebase } from './firebase.js';
+import { USE_EMULATORS } from './config.js';
 import { fromStored } from './quizModel.js';
 import { AppError, toAppError } from '../utils/errors.js';
 import { LIMITS } from '../utils/constants.js';
@@ -12,6 +13,8 @@ const QUIZZES = 'quizzes';
 const DELETED = 'deletedQuizzes'; // 삭제 표시(묘비): 삭제된 퀴즈와 없는 퀴즈를 구분하기 위함
 
 const db = () => getFirebase().db;
+// 화면에 표시할 이미지 주소 허용 범위 (utils/safeUrl.js)
+const URL_OPTS = { emulator: USE_EMULATORS };
 
 export function newQuizId() {
   return doc(collection(db(), QUIZZES)).id;
@@ -24,7 +27,7 @@ export async function getQuiz(id) {
   } catch (err) {
     throw toAppError(err);
   }
-  if (snap.exists()) return fromStored(snap.id, snap.data());
+  if (snap.exists()) return fromStored(snap.id, snap.data(), URL_OPTS);
   let deleted = false;
   try {
     deleted = (await getDoc(doc(db(), DELETED, id))).exists();
@@ -45,7 +48,7 @@ export async function listPublicQuizzes({ category, token, sort = 'latest', curs
   try {
     const snap = await getDocs(query(collection(db(), QUIZZES), ...parts));
     return {
-      items: snap.docs.map((d) => fromStored(d.id, d.data())),
+      items: snap.docs.map((d) => fromStored(d.id, d.data(), URL_OPTS)),
       cursor: snap.docs.length ? snap.docs[snap.docs.length - 1] : null,
       hasMore: snap.docs.length === pageSize,
     };
@@ -59,7 +62,7 @@ export async function listMyQuizzes(uid) {
     const snap = await getDocs(
       query(collection(db(), QUIZZES), where('ownerUid', '==', uid), orderBy('updatedAt', 'desc'), limit(100)),
     );
-    return snap.docs.map((d) => fromStored(d.id, d.data()));
+    return snap.docs.map((d) => fromStored(d.id, d.data(), URL_OPTS));
   } catch (err) {
     throw toAppError(err);
   }

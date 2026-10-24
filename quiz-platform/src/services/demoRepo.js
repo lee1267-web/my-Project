@@ -9,6 +9,7 @@ import { LIMITS } from '../utils/constants.js';
 const KEY = 'quizbang.demo.quizzes';
 const DELETED_KEY = 'quizbang.demo.deleted';
 export const SAMPLE_OWNER = 'sample-owner';
+const URL_OPTS = { demo: true }; // 데모 모드는 브라우저에 저장한 data: 이미지만 허용
 
 export function createDemoRepo({ storage = globalThis.localStorage, seed = [] } = {}) {
   const memory = {};
@@ -66,7 +67,7 @@ export function createDemoRepo({ storage = globalThis.localStorage, seed = [] } 
       // Firestore 보안 규칙과 같은 조건으로 비공개 퀴즈를 막습니다.
       const visible = (data.isPublic && data.status === 'active') || (uid && data.ownerUid === uid);
       if (!visible) throw new AppError('forbidden', '비공개 퀴즈입니다. 제작자만 볼 수 있습니다.');
-      return fromStored(id, data);
+      return fromStored(id, data, URL_OPTS);
     },
 
     async listPublicQuizzes({ category, token, sort = 'latest', cursor = 0, pageSize = LIMITS.pageSize }) {
@@ -84,7 +85,7 @@ export function createDemoRepo({ storage = globalThis.localStorage, seed = [] } 
       const start = cursor || 0;
       const page = list.slice(start, start + pageSize);
       return {
-        items: page.map(([id, q]) => fromStored(id, q)),
+        items: page.map(([id, q]) => fromStored(id, q, URL_OPTS)),
         cursor: start + page.length,
         hasMore: start + page.length < list.length,
       };
@@ -94,7 +95,7 @@ export function createDemoRepo({ storage = globalThis.localStorage, seed = [] } 
       await tick();
       return Object.entries(all())
         .filter(([, q]) => q.ownerUid === uid)
-        .map(([id, q]) => fromStored(id, q))
+        .map(([id, q]) => fromStored(id, q, URL_OPTS))
         .sort((a, b) => b.updatedAt - a.updatedAt);
     },
 

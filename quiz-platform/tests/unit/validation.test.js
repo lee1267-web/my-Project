@@ -16,6 +16,10 @@ describe('퀴즈 입력 검증', () => {
     expect(validateQuiz(quiz({ title: '가'.repeat(101) })).errors.title).toMatch(/100자/);
     expect(validateQuiz(quiz({ title: '가'.repeat(100) })).valid).toBe(true);
   });
+  it('이모지는 보안 규칙과 같게 2글자로 센다 (규칙과 기준 불일치로 저장 실패하는 것 방지)', () => {
+    expect(validateQuiz(quiz({ title: '🎵'.repeat(50) })).valid).toBe(true);
+    expect(validateQuiz(quiz({ title: '🎵'.repeat(51) })).errors.title).toMatch(/100자/);
+  });
   it('카테고리 미선택/잘못된 값은 오류', () => {
     expect(validateQuiz(quiz({ category: '' })).errors.category).toBeTruthy();
     expect(validateQuiz(quiz({ category: 'hack' })).errors.category).toBeTruthy();
@@ -54,6 +58,8 @@ describe('이미지 파일 검증', () => {
     expect(validateImageFile({ type: 'image/svg+xml', size: 1000 })).toMatch(/JPG/);
     expect(validateImageFile({ type: 'application/pdf', size: 1000 })).toMatch(/JPG/);
     expect(validateImageFile({ type: 'image/jpeg', size: 3 * 1024 * 1024 })).toMatch(/2MB/);
+    expect(validateImageFile({ type: 'image/jpeg', size: 2 * 1024 * 1024 })).toMatch(/2MB/); // 규칙은 2MB 미만
+    expect(validateImageFile({ type: 'image/jpeg', size: 2 * 1024 * 1024 - 1 })).toBeNull();
     expect(validateImageFile({ type: 'image/jpeg', size: 0 })).toMatch(/빈 파일/);
   });
 });
