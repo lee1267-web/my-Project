@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { SAMPLE_QUIZZES } from '../../src/data/samples/index.js';
 import { validateQuiz } from '../../src/utils/validation.js';
-import { isCorrect } from '../../src/utils/grading.js';
+import { isCorrect, normalizeAnswer } from '../../src/utils/grading.js';
 import { CATEGORY_KEYS, QUIZ_ID_PATTERN } from '../../src/utils/constants.js';
 import { toEditableFields } from '../../src/services/quizModel.js';
 
@@ -31,6 +31,16 @@ describe('샘플 퀴즈 데이터 검사', () => {
         s.questions.filter((q) => q.type === 'choice').forEach((q) => {
           expect(q.options.length).toBeGreaterThanOrEqual(4);
           expect(q.options.filter((o) => o === q.answer)).toHaveLength(1);
+        });
+      });
+      it('같은 세트의 다른 답·보기를 입력해도 오답으로 채점된다 (오답이 정답 처리되지 않음)', () => {
+        const pool = new Set(s.questions.flatMap((q) => [q.answer, ...(q.altAnswers || []), ...(q.options || [])]));
+        s.questions.forEach((q) => {
+          const own = new Set([q.answer, ...(q.altAnswers || [])].map(normalizeAnswer));
+          for (const cand of pool) {
+            if (own.has(normalizeAnswer(cand))) continue;
+            expect(isCorrect(q, cand), `${q.question} ← "${cand}"`).toBe(false);
+          }
         });
       });
       it('같은 문제가 중복되지 않는다', () => {

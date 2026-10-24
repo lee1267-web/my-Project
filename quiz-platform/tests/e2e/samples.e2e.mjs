@@ -4,6 +4,7 @@
 //  - 모든 문제를 틀리면 0점인지 (첫 세트)
 import { loadPlaywright, assert, step, summary, watchErrors, playAll } from './helpers.mjs';
 import { SAMPLE_QUIZZES } from '../../src/data/samples/index.js';
+import { isCorrect } from '../../src/utils/grading.js';
 
 const BASE = process.env.BASE_URL;
 const { chromium } = loadPlaywright();
@@ -21,6 +22,33 @@ export async function run() {
       await playAll(page, s.questions.map((q) => q.answer));
       assert.equal((await page.locator('.score-num').textContent()).trim(), '100');
       assert.equal(await page.locator('.review-item.is-correct').count(), s.questions.length);
+    });
+  }
+
+  // 그럴듯한 오답: 객관식은 정답이 아닌 보기, 주관식은 같은 세트의 다른 문제 정답 중 이 문제에서 인정되지 않는 것
+  const wrongFor = (s, q, i) => {
+    if (q.type === 'choice') return q.options.find((o) => o !== q.answer);
+    const pool = s.questions.filter((_, k) => k !== i && _.type === 'text').map((x) => x.answer);
+    return pool.find((a) => !isCorrect(q, a)) || '모르겠어요';
+  };
+
+  for (const s of SAMPLE_QUIZZES) {
+    await step(`${s.title} — 그럴듯한 오답으로 전부 틀리기 → 0점, 오답 50개`, async () => {
+      await page.goto(`${BASE}/quiz/${s.demoId}`);
+      await playAll(page, s.questions.map((q, i) => wrongFor(s, q, i)));
+      assert.equal((await page.locator('.score-num').textContent()).trim(), '0');
+      assert.deepEqual(await page.locator('.stat dd').allTextContents(), ['0개', '50개', '0%', '50문제']);
+      assert.equal(await page.locator('.review-item.is-wrong').count(), 50);
+    });
+    await step(`${s.title} — 홀수 번 정답·짝수 번 오답 → 50점, 문제별 ⭕❌ 정확`, async () => {
+      await page.goto(`${BASE}/quiz/${s.demoId}`);
+      await playAll(page, s.questions.map((q, i) => (i % 2 === 0 ? q.answer : wrongFor(s, q, i))));
+      assert.equal((await page.locator('.score-num').textContent()).trim(), '50');
+      const marks = await page.locator('.review-item').evaluateAll((els) => els.map((e) => e.classList.contains('is-correct')));
+      assert.deepEqual(marks, s.questions.map((_, i) => i % 2 === 0));
+      // 틀린 문제에는 정답이 표시되어야 함
+      const wrongItem = page.locator('.review-item').nth(1);
+      assert.ok((await wrongItem.textContent()).includes(s.questions[1].answer));
     });
   }
 
@@ -44,7 +72,7 @@ export async function run() {
     await page.goto(`${BASE}/?sort=popular`);
     await page.locator('.quiz-card:not(.skeleton)').first().waitFor();
     const meta = await page.locator('.quiz-card').first().textContent();
-    assert.match(meta, /플레이 3회/, meta);
+    assert.match(meta, /플레이 5회/, meta);
   });
 
   await step('콘솔 오류 없음', async () => assert.deepEqual(errors, []));
