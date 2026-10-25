@@ -37,13 +37,13 @@ export function makeOptionOrders(questions, rand) {
   const used = [];
   const recent = [];
   return questions.map((q) => {
-    if (q.type !== 'choice' || q.options.length < 2) return null;
+    if (q.type !== 'choice') return null;
     const answerIdx = q.options.indexOf(q.answer);
     const base = q.options.map((_, i) => i);
     if (answerIdx < 0) return shuffled(base, rand);
     const count = (p) => used[p] || 0;
     const blocked = recent.length >= 2 && recent.at(-1) === recent.at(-2) ? recent.at(-1) : -1;
-    const open = base.filter((p) => p !== blocked);
+    const open = base.length > 1 ? base.filter((p) => p !== blocked) : base;
     const least = Math.min(...open.map(count));
     const choices = open.filter((p) => count(p) <= least + 1);
     const target = choices[Math.floor(rand() * choices.length)];

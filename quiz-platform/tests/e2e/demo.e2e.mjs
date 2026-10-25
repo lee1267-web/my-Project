@@ -383,6 +383,38 @@ export async function run() {
     for (let i = 2; i < n; i += 1) assert.ok(!(positions[i] === positions[i - 1] && positions[i] === positions[i - 2]), '같은 자리 3연속 금지');
   });
 
+  await step('샘플 퀴즈: 몇 문제 푼 뒤 새로고침해도 이어 풀기 (샘플이 매번 다시 깔리지 않음)', async () => {
+    await page.goto(`${BASE}/quiz/Samplehistory0000000`);
+    await page.getByRole('button', { name: '퀴즈 시작하기' }).click();
+    for (let i = 0; i < 2; i += 1) {
+      await answerCurrent(page, null);
+      await nextQuestion(page);
+    }
+    await page.reload();
+    await page.getByRole('button', { name: /이어서 풀기 \(3\/50\)/ }).waitFor();
+  });
+
+  await step('규칙을 우회해 보기가 1개뿐인 객관식이 저장돼 있어도 풀기 화면이 깨지지 않음', async () => {
+    const id = 'BrokenOneOption00000';
+    await page.evaluate((qid) => {
+      const key = 'quizbang.demo.quizzes';
+      const data = JSON.parse(localStorage.getItem(key));
+      data[qid] = {
+        title: '이상한 데이터', description: '', category: 'etc', subcategory: '', tags: [], imageUrl: '', isPublic: true,
+        questionCount: 2, searchTokens: [], ownerUid: 'someone', status: 'active', playCount: 0,
+        createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(),
+        questions: [
+          { id: 'a', type: 'choice', question: '보기 하나', answer: '하나', options: ['하나'], altAnswers: [], imageUrl: '', order: 0 },
+          { id: 'b', type: 'choice', question: '보기 둘', answer: '둘', options: ['하나', '둘'], altAnswers: [], imageUrl: '', order: 1 },
+        ],
+      };
+      localStorage.setItem(key, JSON.stringify(data));
+    }, id);
+    await page.goto(`${BASE}/quiz/${id}`);
+    await playAll(page, ['하나', '둘']);
+    assert.equal((await page.locator('.score-num').textContent()).trim(), '100');
+  });
+
   await step('모든 주요 화면에 "null"·"undefined" 같은 글자가 새어 나오지 않음', async () => {
     const paths = ['/', '/?q=노래', '/?cat=music&sub=trot', '/create', '/my', '/quiz/Samplehistory0000000', '/quiz/Samplehistory0000000?saved=1',
       '/quiz/Samplehistory0000000/result', '/quiz/not-valid', '/nope'];

@@ -10,21 +10,22 @@ import { AppError } from '../utils/errors.js';
 import { QUIZ_ID_PATTERN, getSubcategory } from '../utils/constants.js';
 import { parseSearchTerm, matchesSearch, subToken } from '../utils/search.js';
 import { validateQuiz } from '../utils/validation.js';
+import { hashSeed } from '../utils/shuffle.js';
 
 const loadSamples = () => import('../data/samples/index.js').then((m) => m.SAMPLE_QUIZZES);
-// 샘플 퀴즈 내용을 바꾸면 이 값을 올리세요. 데모 모드 브라우저의 샘플이 새 내용으로 갱신됩니다.
-const SAMPLE_VERSION = '2026-10-41sets';
 
 // 데모 모드는 처음 실행할 때 샘플 퀴즈를 넣어 두기 위해 샘플 파일을 불러옵니다.
 let repoPromise = null;
 function getRepo() {
   if (!repoPromise) {
     repoPromise = IS_DEMO
-      ? loadSamples().then((samples) =>
-          createDemoRepo({
-            seed: samples.map((s) => ({ id: s.demoId, fields: toEditableFields(s) })),
-            seedVersion: SAMPLE_VERSION,
-          }))
+      ? loadSamples().then((samples) => {
+        // 샘플 원본 내용으로 버전을 만들어, 내용이 조금이라도 바뀌면 데모 브라우저의 샘플도 자동으로 갱신됩니다.
+        // (toEditableFields 는 문제 ID 를 무작위로 붙이므로 그 결과가 아닌 원본으로 계산)
+        const seedVersion = `h${hashSeed(JSON.stringify(samples))}`;
+        const seed = samples.map((s) => ({ id: s.demoId, fields: toEditableFields(s) }));
+        return createDemoRepo({ seed, seedVersion });
+      })
       : import('./firestoreRepo.js');
   }
   return repoPromise;

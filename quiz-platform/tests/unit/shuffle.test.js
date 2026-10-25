@@ -34,6 +34,15 @@ describe('보기 순서 섞기', () => {
     }
   });
 
+  it('보기가 1개뿐인 객관식(규칙을 우회해 저장된 데이터)도 순서를 만들어 화면이 깨지지 않는다', () => {
+    const qs = [choice('a', ['a']), choice('a', ['a', 'b']), choice('a', ['a']), choice('a', ['a'])];
+    const orders = makeOptionOrders(qs, seededRandom(3));
+    expect(orders[0]).toEqual([0]);
+    expect(orders[2]).toEqual([0]);
+    expect(orders[3]).toEqual([0]);
+    expect(validOrders(orders, qs)).toBe(true);
+  });
+
   it('퀴즈와 맞지 않는 저장 순서는 거부', () => {
     const qs = [choice('x', ['x', 'y', 'z']), text()];
     expect(validOrders([[2, 0, 1], null], qs)).toBe(true);
