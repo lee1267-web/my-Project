@@ -352,6 +352,37 @@ export async function run() {
     await page.waitForURL(/\/my$/);
   });
 
+  await step('객관식 보기 순서: 정답을 모두 1번 보기에 넣어도 풀 때는 섞여 나오고, 새로고침해도 순서 유지', async () => {
+    const n = 9;
+    await page.goto(`${BASE}/create`);
+    await fillQuiz(page, {
+      title: '보기 섞기 확인', category: 'etc',
+      questions: Array.from({ length: n }, (_, i) => ({
+        type: 'choice', question: `섞기 ${i + 1}번 문제`, options: [`정답${i + 1}`, '보기 나', '보기 다', '보기 라'], correct: 0,
+      })),
+    });
+    const id = await saveQuiz(page);
+    await page.goto(`${BASE}/quiz/${id}`);
+    await page.getByRole('button', { name: '퀴즈 시작하기' }).click();
+    const positions = [];
+    for (let i = 0; i < n; i += 1) {
+      const texts = await page.locator('form.question-play .choice-text').allTextContents();
+      if (i === 4) {
+        await page.reload();
+        await page.getByRole('button', { name: /이어서 풀기/ }).click();
+        assert.deepEqual(await page.locator('form.question-play .choice-text').allTextContents(), texts, '새로고침 후에도 같은 보기 순서');
+      }
+      positions.push(texts.indexOf(`정답${i + 1}`));
+      await answerCurrent(page, `정답${i + 1}`);
+      await nextQuestion(page);
+    }
+    await page.waitForURL(/\/result$/);
+    assert.equal((await page.locator('.score-num').textContent()).trim(), '100');
+    assert.ok(positions.every((p) => p >= 0));
+    assert.ok(new Set(positions).size >= 3, `정답 자리: ${positions.map((p) => p + 1).join(',')}`);
+    for (let i = 2; i < n; i += 1) assert.ok(!(positions[i] === positions[i - 1] && positions[i] === positions[i - 2]), '같은 자리 3연속 금지');
+  });
+
   await step('모든 주요 화면에 "null"·"undefined" 같은 글자가 새어 나오지 않음', async () => {
     const paths = ['/', '/?q=노래', '/?cat=music&sub=trot', '/create', '/my', '/quiz/Samplehistory0000000', '/quiz/Samplehistory0000000?saved=1',
       '/quiz/Samplehistory0000000/result', '/quiz/not-valid', '/nope'];

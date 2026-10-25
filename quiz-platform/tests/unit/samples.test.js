@@ -53,6 +53,18 @@ describe('샘플 퀴즈 데이터 검사', () => {
     });
   }
 
+  it('세트마다 객관식 정답 자리가 한쪽으로 쏠리지 않고 세 문제 연속 같지 않다', () => {
+    for (const s of SAMPLE_QUIZZES) {
+      const pos = s.questions.filter((q) => q.type === 'choice').map((q) => q.options.indexOf(q.answer));
+      if (pos.length < 8) continue;
+      const most = Math.max(...[0, 1, 2, 3, 4, 5].map((p) => pos.filter((x) => x === p).length));
+      expect(most / pos.length, `${s.key} 정답 자리 쏠림`).toBeLessThanOrEqual(0.4);
+      for (let i = 2; i < pos.length; i += 1) {
+        expect(pos[i] === pos[i - 1] && pos[i] === pos[i - 2], `${s.key} ${i}번째 객관식`).toBe(false);
+      }
+    }
+  });
+
   it('서로 다른 세트에 같은 문제가 들어 있지 않다', () => {
     // 띄어쓰기·따옴표·괄호·물음표만 다른 경우도 같은 문제로 봄
     const key = (text) => text.replace(/[\s「」『』"'?.,()·]/g, '');

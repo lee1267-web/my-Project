@@ -9,6 +9,7 @@ import { thumbnail } from '../components/thumbnail.js';
 import { shareBox } from '../components/shareBox.js';
 import { showToast } from '../components/toast.js';
 import { savePlayState, loadPlayState, clearPlayState, saveResult, quizVersion } from '../utils/playStorage.js';
+import { makeOptionOrders, validOrders } from '../utils/shuffle.js';
 
 export async function render(container, ctx) {
   const id = ctx.params.id;
@@ -25,12 +26,13 @@ export async function render(container, ctx) {
   const root = h('div', { class: 'container play' });
   container.append(root);
 
-  // 진행 상태: answers[i] = 사용자의 답 (건너뜀 = null), checked = 현재 문제 채점 여부
+  // 진행 상태: answers[i] = 사용자의 답 (건너뜀 = null), checked = 현재 문제 채점 여부,
+  // orders[i] = 객관식 보기를 보여 줄 순서 (풀 때마다 새로 섞음)
   let state = null;
 
   // 저장된 진행 상태 불러오기 (퀴즈가 수정됐으면 버림)
   const saved = loadPlayState(id);
-  const resumable = saved && saved.version === version && saved.index < total;
+  const resumable = saved && saved.version === version && saved.index < total && validOrders(saved.orders, quiz.questions);
   if (saved && !resumable) {
     clearPlayState(id);
     if (saved.version !== version) showToast('퀴즈가 수정되어 처음부터 다시 시작합니다.');
@@ -84,14 +86,14 @@ export async function render(container, ctx) {
 
   function start(fromSaved) {
     state = fromSaved
-      ? { index: fromSaved.index, answers: fromSaved.answers, checked: fromSaved.checked }
-      : { index: 0, answers: [], checked: false };
+      ? { index: fromSaved.index, answers: fromSaved.answers, checked: fromSaved.checked, orders: fromSaved.orders }
+      : { index: 0, answers: [], checked: false, orders: makeOptionOrders(quiz.questions, Math.random) };
     if (!fromSaved) clearPlayState(id);
     renderQuestion();
   }
 
   function persist() {
-    savePlayState(id, { version, index: state.index, answers: state.answers, checked: state.checked });
+    savePlayState(id, { version, index: state.index, answers: state.answers, checked: state.checked, orders: state.orders });
   }
 
   function renderQuestion() {
@@ -118,7 +120,7 @@ export async function render(container, ctx) {
     if (q.type === 'choice') {
       const name = `opt-${i}`;
       inputArea = h('fieldset', { class: 'choices' }, h('legend', { class: 'sr-only' }, '보기 선택'));
-      q.options.forEach((opt, oi) => {
+      state.orders[i].map((k) => q.options[k]).forEach((opt, oi) => {
         const radio = h('input', { type: 'radio', name, value: opt, id: `${name}-${oi}`, class: 'choice-radio', disabled: answered });
         if (answered && state.answers[i] === opt) radio.checked = true;
         const label = h('label', { for: radio.id, class: 'choice' }, radio, h('span', { class: 'choice-key', 'aria-hidden': 'true' }, String(oi + 1)), h('span', { class: 'choice-text' }, opt));
