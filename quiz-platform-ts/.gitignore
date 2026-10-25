@@ -1,0 +1,38 @@
+# 의존성 / 빌드 결과
+node_modules/
+dist/
+coverage/
+
+# 환경변수 (실제 값은 절대 커밋하지 마세요)
+.env
+.env.*
+!.env.example
+!.env.demo
+!.env.emulator
+
+# Firebase 로컬 파일 / 서비스 계정 키
+.firebase/
+.firebaserc.local
+firebase-debug.log*
+firestore-debug.log*
+storage-debug.log*
+ui-debug.log*
+database-debug.log*
+pubsub-debug.log*
+*-service-account*.json
+serviceAccount*.json
+service-account*.json
+*.pem
+*.key
+
+# 테스트 산출물
+test-results/
+playwright-report/
+tests/e2e/screenshots/
+
+# OS / 에디터
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.log
