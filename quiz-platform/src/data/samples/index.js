@@ -1,4 +1,4 @@
-// 샘플 퀴즈 목록 (31세트 × 50문제). 새 세트를 만들면 파일을 추가하고 아래 목록에 등록하세요.
+// 샘플 퀴즈 목록 (41세트 × 50문제). 새 세트를 만들면 파일을 추가하고 아래 목록에 등록하세요.
 // 이 파일은 필요할 때만 불러옵니다(첫 화면 로딩 속도 보호).
 import history from './history.js';
 import worldhistory from './worldhistory.js';
@@ -31,11 +31,22 @@ import brands from './brands.js';
 import nonsense from './nonsense.js';
 import slang from './slang.js';
 import worldgeo from './worldgeo.js';
+import people from './people.js';
+import physics from './physics.js';
+import chemistry from './chemistry.js';
+import basketball from './basketball.js';
+import pop from './pop.js';
+import inventions from './inventions.js';
+import dinosaurs from './dinosaurs.js';
+import boardgames from './boardgames.js';
+import heritage from './heritage.js';
+import disney from './disney.js';
 
 const LIST = [
   history, worldhistory, general, science, capitals, koreageo, spelling, idioms, english, songs, ballad,
   classical, idols, movies, kdrama, animation, games, football, olympics, math, animals,
   kfood, proverbs, flags, space, body, baseball, brands, nonsense, slang, worldgeo,
+  people, physics, chemistry, basketball, pop, inventions, dinosaurs, boardgames, heritage, disney,
 ];
 
 // 데모 모드에서 쓰는 고정 ID (영숫자 20자)

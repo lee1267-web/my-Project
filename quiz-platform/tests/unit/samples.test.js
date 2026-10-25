@@ -52,4 +52,19 @@ describe('샘플 퀴즈 데이터 검사', () => {
       });
     });
   }
+
+  it('서로 다른 세트에 같은 문제가 들어 있지 않다', () => {
+    // 띄어쓰기·따옴표·괄호·물음표만 다른 경우도 같은 문제로 봄
+    const key = (text) => text.replace(/[\s「」『』"'?.,()·]/g, '');
+    const seen = new Map();
+    const dups = [];
+    for (const s of SAMPLE_QUIZZES) {
+      for (const q of s.questions) {
+        const k = key(q.question);
+        if (seen.has(k) && seen.get(k) !== s.key) dups.push(`${seen.get(k)} / ${s.key}: ${q.question}`);
+        else seen.set(k, s.key);
+      }
+    }
+    expect(dups).toEqual([]);
+  });
 });
