@@ -65,6 +65,22 @@ describe('샘플 퀴즈 데이터 검사', () => {
     }
   });
 
+  it('주관식 정답이 앞 문제의 문장에 그대로 나와 힌트가 되지 않는다', () => {
+    // 단어가 우연히 겹칠 뿐 정답을 알려 주지 않는 경우만 예외로 둠
+    const allowed = new Set(['movies:부산', 'kfood:돼지', 'body:피부']);
+    const flat = (x) => x.replace(/\s/g, '').toLowerCase();
+    const leaks = [];
+    for (const s of SAMPLE_QUIZZES) {
+      s.questions.forEach((q, i) => {
+        if (q.type !== 'text' || q.answer.length < 2 || /^[\d.,/]+$/.test(q.answer)) return;
+        if (allowed.has(`${s.key}:${q.answer}`)) return;
+        const before = s.questions.slice(0, i).find((p) => flat(p.question).includes(flat(q.answer)));
+        if (before) leaks.push(`${s.key} "${q.answer}" ← ${before.question}`);
+      });
+    }
+    expect(leaks).toEqual([]);
+  });
+
   it('서로 다른 세트에 같은 문제가 들어 있지 않다', () => {
     // 띄어쓰기·따옴표·괄호·물음표만 다른 경우도 같은 문제로 봄
     const key = (text) => text.replace(/[\s「」『』"'?.,()·]/g, '');
