@@ -178,6 +178,9 @@ main { flex: 1; outline: none; padding-bottom: 48px; }
 .thumb-science { background: linear-gradient(135deg, #74c0fc, #1c7ed6); }
 .thumb-geography { background: linear-gradient(135deg, #a9e34b, #2b8a3e); }
 .thumb-language { background: linear-gradient(135deg, #ffc9c9, #f76707); }
+.thumb-culture { background: linear-gradient(135deg, #e599f7, #ae3ec9); }
+.thumb-tech { background: linear-gradient(135deg, #66d9e8, #1098ad); }
+.thumb-economy { background: linear-gradient(135deg, #ffe066, #f08c00); }
 .thumb-etc { background: linear-gradient(135deg, #ced4da, #868e96); }
 
 /* 퀴즈 카드 */

@@ -1,4 +1,4 @@
-// 샘플 퀴즈 목록 (41세트 × 50문제). 새 세트를 만들면 파일을 추가하고 아래 목록에 등록하세요.
+// 샘플 퀴즈 목록 (54세트 × 50문제). 새 세트를 만들면 파일을 추가하고 아래 목록에 등록하세요.
 // 이 파일은 필요할 때만 불러옵니다(첫 화면 로딩 속도 보호).
 import { makeOptionOrders, seededRandom, hashSeed } from '../../utils/shuffle.js';
 import history from './history.js';
@@ -42,12 +42,26 @@ import dinosaurs from './dinosaurs.js';
 import boardgames from './boardgames.js';
 import heritage from './heritage.js';
 import disney from './disney.js';
+import literature from './literature.js';
+import art from './art.js';
+import myth from './myth.js';
+import philosophy from './philosophy.js';
+import computer from './computer.js';
+import coding from './coding.js';
+import ai from './ai.js';
+import economy from './economy.js';
+import civics from './civics.js';
+import jobs from './jobs.js';
+import chosung from './chosung.js';
+import oxscience from './oxscience.js';
+import oxlife from './oxlife.js';
 
 const LIST = [
   history, worldhistory, general, science, capitals, koreageo, spelling, idioms, english, songs, ballad,
   classical, idols, movies, kdrama, animation, games, football, olympics, math, animals,
   kfood, proverbs, flags, space, body, baseball, brands, nonsense, slang, worldgeo,
   people, physics, chemistry, basketball, pop, inventions, dinosaurs, boardgames, heritage, disney,
+  literature, art, myth, philosophy, computer, coding, ai, economy, civics, jobs, chosung, oxscience, oxlife,
 ];
 
 // 데모 모드에서 쓰는 고정 ID (영숫자 20자)

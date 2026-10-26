@@ -43,6 +43,13 @@ describe('보기 순서 섞기', () => {
     expect(validOrders(orders, qs)).toBe(true);
   });
 
+  it('OX 문제는 섞지 않고 늘 O, X 순서', () => {
+    const qs = Array.from({ length: 10 }, (_, i) => choice(i % 3 ? 'O' : 'X', ['O', 'X']));
+    for (let seed = 0; seed < 20; seed += 1) {
+      expect(makeOptionOrders(qs, seededRandom(seed)).every((o) => o[0] === 0 && o[1] === 1)).toBe(true);
+    }
+  });
+
   it('퀴즈와 맞지 않는 저장 순서는 거부', () => {
     const qs = [choice('x', ['x', 'y', 'z']), text()];
     expect(validOrders([[2, 0, 1], null], qs)).toBe(true);

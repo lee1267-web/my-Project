@@ -4,6 +4,7 @@ import { validateQuiz } from '../../src/utils/validation.ts';
 import { isCorrect, normalizeAnswer } from '../../src/utils/grading.ts';
 import { CATEGORY_KEYS, QUIZ_ID_PATTERN } from '../../src/utils/constants.ts';
 import { toEditableFields } from '../../src/services/quizModel.ts';
+import { isOxQuestion } from '../../src/utils/shuffle.ts';
 
 describe('샘플 퀴즈 데이터 검사', () => {
   it('키와 데모 ID 가 겹치지 않는다', () => {
@@ -27,9 +28,9 @@ describe('샘플 퀴즈 데이터 검사', () => {
           (q.altAnswers || []).forEach((a) => expect(isCorrect(q, a)).toBe(true));
         });
       });
-      it('객관식 보기는 4개 이상, 정답은 보기에 정확히 1번', () => {
+      it('객관식 보기는 4개 이상(OX 문제는 O·X 두 개), 정답은 보기에 정확히 1번', () => {
         s.questions.filter((q) => q.type === 'choice').forEach((q) => {
-          expect(q.options.length).toBeGreaterThanOrEqual(4);
+          if (!isOxQuestion(q)) expect(q.options.length).toBeGreaterThanOrEqual(4);
           expect(q.options.filter((o) => o === q.answer)).toHaveLength(1);
         });
       });
@@ -53,9 +54,22 @@ describe('샘플 퀴즈 데이터 검사', () => {
     });
   }
 
+  it('OX 문제는 O·X 가 고르게 섞여 있고 같은 답이 네 번 연속 나오지 않는다', () => {
+    for (const s of SAMPLE_QUIZZES) {
+      const ox = s.questions.filter((q) => q.type === 'choice' && isOxQuestion(q)).map((q) => q.answer);
+      if (ox.length < 10) continue;
+      const o = ox.filter((a) => a === 'O').length;
+      expect(o / ox.length, `${s.key} O 비율`).toBeGreaterThanOrEqual(0.4);
+      expect(o / ox.length, `${s.key} O 비율`).toBeLessThanOrEqual(0.6);
+      for (let i = 3; i < ox.length; i += 1) {
+        expect(new Set(ox.slice(i - 3, i + 1)).size, `${s.key} ${i}번째 OX`).toBeGreaterThan(1);
+      }
+    }
+  });
+
   it('세트마다 객관식 정답 자리가 한쪽으로 쏠리지 않고 세 문제 연속 같지 않다', () => {
     for (const s of SAMPLE_QUIZZES) {
-      const pos = s.questions.filter((q) => q.type === 'choice').map((q) => q.options.indexOf(q.answer));
+      const pos = s.questions.filter((q) => q.type === 'choice' && !isOxQuestion(q)).map((q) => q.options.indexOf(q.answer));
       if (pos.length < 8) continue;
       const most = Math.max(...[0, 1, 2, 3, 4, 5].map((p) => pos.filter((x) => x === p).length));
       expect(most / pos.length, `${s.key} 정답 자리 쏠림`).toBeLessThanOrEqual(0.4);

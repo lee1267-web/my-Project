@@ -1,4 +1,4 @@
-// 샘플 퀴즈 목록 (41세트 × 50문제). 새 세트를 만들면 파일을 추가하고 아래 목록에 등록하세요.
+// 샘플 퀴즈 목록 (54세트 × 50문제). 새 세트를 만들면 파일을 추가하고 아래 목록에 등록하세요.
 // 이 파일은 필요할 때만 불러옵니다(첫 화면 로딩 속도 보호).
 import { makeOptionOrders, seededRandom, hashSeed } from '../../utils/shuffle.ts';
 import type { SampleQuestion, SampleSet } from './helpers.ts';
@@ -43,12 +43,26 @@ import dinosaurs from './dinosaurs.ts';
 import boardgames from './boardgames.ts';
 import heritage from './heritage.ts';
 import disney from './disney.ts';
+import literature from './literature.ts';
+import art from './art.ts';
+import myth from './myth.ts';
+import philosophy from './philosophy.ts';
+import computer from './computer.ts';
+import coding from './coding.ts';
+import ai from './ai.ts';
+import economy from './economy.ts';
+import civics from './civics.ts';
+import jobs from './jobs.ts';
+import chosung from './chosung.ts';
+import oxscience from './oxscience.ts';
+import oxlife from './oxlife.ts';
 
 const LIST: SampleSet[] = [
   history, worldhistory, general, science, capitals, koreageo, spelling, idioms, english, songs, ballad,
   classical, idols, movies, kdrama, animation, games, football, olympics, math, animals,
   kfood, proverbs, flags, space, body, baseball, brands, nonsense, slang, worldgeo,
   people, physics, chemistry, basketball, pop, inventions, dinosaurs, boardgames, heritage, disney,
+  literature, art, myth, philosophy, computer, coding, ai, economy, civics, jobs, chosung, oxscience, oxlife,
 ];
 
 // 데모 모드에서 쓰는 고정 ID (영숫자 20자)

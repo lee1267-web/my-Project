@@ -7,6 +7,7 @@ import {
   doc, getDoc, setDoc, updateDoc, deleteDoc, collection, query, where, getDocs, orderBy, limit,
   serverTimestamp, increment, writeBatch,
 } from 'firebase/firestore';
+import { CATEGORY_KEYS } from '../../src/utils/constants.ts';
 
 const PROJECT = 'demo-quizbang-rules';
 let env: RulesTestEnvironment;
@@ -71,6 +72,12 @@ describe('읽기', () => {
 describe('생성', () => {
   it('로그인한 사용자는 본인 소유로 생성 가능', async () => {
     await assertSucceeds(setDoc(doc(alice(), 'quizzes', ID), quizData('alice')));
+  });
+  it('앱의 모든 카테고리(새로 추가한 예술·문학, IT·컴퓨터, 경제·사회 포함)로 저장할 수 있다', async () => {
+    for (const [i, category] of CATEGORY_KEYS.entries()) {
+      const id = `Cat${String(i).padStart(2, '0')}AbCdEfGhIjKlMnO`.slice(0, 20);
+      await assertSucceeds(setDoc(doc(alice(), 'quizzes', id), quizData('alice', { category, subcategory: '' })));
+    }
   });
   it('비로그인 사용자는 생성 불가', async () => {
     await assertFails(setDoc(doc(guest(), 'quizzes', ID), quizData('alice')));

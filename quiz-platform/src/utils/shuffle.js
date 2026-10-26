@@ -30,6 +30,9 @@ function shuffled(indices, rand) {
   return a;
 }
 
+// OX 문제는 "O, X" 순서가 자연스러우므로 섞지 않습니다. (정답 O·X 를 고르게 내는 것은 만드는 쪽의 몫)
+export const isOxQuestion = (q) => q.options.length === 2 && q.options[0] === 'O' && q.options[1] === 'X';
+
 // 문제마다 보기 표시 순서(원래 보기의 번호 배열)를 만듭니다. 주관식은 null.
 // 정답 자리는 지금까지 덜 쓰인 자리 가운데에서 무작위로 고르고(한쪽 쏠림 방지),
 // 같은 자리가 세 문제 연속 나오지 않게 합니다. 나머지 보기는 무작위로 섞습니다.
@@ -38,6 +41,7 @@ export function makeOptionOrders(questions, rand) {
   const recent = [];
   return questions.map((q) => {
     if (q.type !== 'choice') return null;
+    if (isOxQuestion(q)) return [0, 1];
     const answerIdx = q.options.indexOf(q.answer);
     const base = q.options.map((_, i) => i);
     if (answerIdx < 0) return shuffled(base, rand);

@@ -27,7 +27,7 @@ service cloud.firestore {
 
     function validCategory(c) {
       return c in ['general', 'history', 'music', 'idol', 'movie', 'anime', 'game',
-                   'sports', 'science', 'geography', 'language', 'etc'];
+                   'sports', 'science', 'geography', 'language', 'culture', 'tech', 'economy', 'etc'];
     }
 
     // 썸네일은 "비어 있음" 또는 "본인 업로드 폴더의 Firebase Storage 다운로드 주소"만 허용

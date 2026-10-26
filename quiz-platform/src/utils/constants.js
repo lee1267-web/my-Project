@@ -30,7 +30,7 @@ const sub = (key, label, aliases = []) => ({ key, label, aliases });
 export const CATEGORIES = [
   {
     key: 'general', label: '상식', emoji: '💡', aliases: ['상식', '일반상식', '교양', '퀴즈'],
-    subs: [sub('life', '생활 상식'), sub('nonsense', '넌센스', ['난센스']), sub('current', '시사'), sub('food', '음식', ['요리']), sub('brand', '브랜드·로고', ['브랜드', '로고'])],
+    subs: [sub('life', '생활 상식'), sub('nonsense', '넌센스', ['난센스']), sub('current', '시사'), sub('food', '음식', ['요리']), sub('brand', '브랜드·로고', ['브랜드', '로고']), sub('ox', 'OX 퀴즈', ['ox', '오엑스'])],
   },
   {
     key: 'history', label: '역사', emoji: '🏛️', aliases: ['역사', '사회'],
@@ -82,7 +82,19 @@ export const CATEGORIES = [
   },
   {
     key: 'language', label: '언어', emoji: '📚', aliases: ['언어', '국어', '한국어', '말'],
-    subs: [sub('spelling', '맞춤법', ['띄어쓰기']), sub('idioms', '사자성어', ['고사성어']), sub('english', '영어', ['영단어', 'english']), sub('proverbs', '속담'), sub('slang', '신조어', ['줄임말'])],
+    subs: [sub('spelling', '맞춤법', ['띄어쓰기']), sub('idioms', '사자성어', ['고사성어']), sub('english', '영어', ['영단어', 'english']), sub('proverbs', '속담'), sub('slang', '신조어', ['줄임말']), sub('chosung', '초성 퀴즈', ['초성'])],
+  },
+  {
+    key: 'culture', label: '예술·문학', emoji: '🎨', aliases: ['예술', '문학', '미술', '책', '독서'],
+    subs: [sub('literature', '문학', ['소설', '시', '작가', '책']), sub('art', '미술', ['그림', '화가', '명화']), sub('myth', '신화·전설', ['신화', '전설']), sub('philosophy', '철학')],
+  },
+  {
+    key: 'tech', label: 'IT·컴퓨터', emoji: '💻', aliases: ['it', '컴퓨터', '정보', '기술', '테크'],
+    subs: [sub('computer', '컴퓨터 상식', ['컴퓨터', '하드웨어']), sub('coding', '코딩·프로그래밍', ['코딩', '프로그래밍', '개발']), sub('internet', '인터넷·SNS', ['인터넷', 'sns']), sub('ai', '인공지능', ['ai', '에이아이'])],
+  },
+  {
+    key: 'economy', label: '경제·사회', emoji: '💰', aliases: ['경제', '돈', '금융', '재테크', '법', '정치'],
+    subs: [sub('money', '경제·금융', ['경제', '금융', '돈', '재테크']), sub('law', '법·정치', ['법', '정치', '헌법']), sub('job', '직업', ['진로'])],
   },
   {
     key: 'etc', label: '기타', emoji: '🧩', aliases: ['기타'],
