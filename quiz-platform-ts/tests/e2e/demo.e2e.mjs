@@ -415,6 +415,17 @@ export async function run() {
     assert.equal((await page.locator('.score-num').textContent()).trim(), '100');
   });
 
+  await step('형식이 망가진 임시 저장본을 불러와도 만들기 화면이 멈추지 않음', async () => {
+    const broken = JSON.stringify({ savedAt: 'x', form: { title: 5, questions: [null, { type: 'weird', options: 'x' }] } });
+    await page.evaluate((v) => localStorage.setItem('quizbang.draft.new', v), broken);
+    await page.goto(`${BASE}/create`);
+    await page.getByRole('button', { name: /불러오기/ }).click();
+    await page.getByText('임시 저장본을 불러왔어요').waitFor();
+    assert.equal(await page.locator('.question-card').count(), 1);
+    assert.equal(await page.getByLabel('퀴즈 제목').inputValue(), '');
+    await page.evaluate(() => localStorage.removeItem('quizbang.draft.new'));
+  });
+
   await step('모든 주요 화면에 "null"·"undefined" 같은 글자가 새어 나오지 않음', async () => {
     const paths = ['/', '/?q=노래', '/?cat=music&sub=trot', '/create', '/my', '/quiz/Samplehistory0000000', '/quiz/Samplehistory0000000?saved=1',
       '/quiz/Samplehistory0000000/result', '/quiz/not-valid', '/nope'];

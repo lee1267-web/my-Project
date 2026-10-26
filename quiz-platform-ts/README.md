@@ -15,7 +15,7 @@
 > |---|---|---|
 > | 소스 파일 | `src/**/*.js` | `src/**/*.ts` |
 > | 타입 검사 | 없음 | `npm run typecheck` (엄격 모드, 오류 0개) |
-> | 빌드 | `vite build` | `tsc --noEmit && vite build` (타입 오류가 있으면 빌드 실패) |
+> | 빌드 | `vite build` | 타입 검사 후 `vite build` (타입 오류가 있으면 빌드 실패) |
 > | 실행 방법 | 같음 (`npm run dev:demo`, `npm run dev` …) | 같음 |
 >
 > **TypeScript 버전에서 알아 두면 좋은 점**
@@ -210,7 +210,7 @@ npm run deploy        # = npm run build && firebase deploy --only hosting
 | 명령어 | 내용 | 필요 조건 |
 |---|---|---|
 | `npm test` | 단위 테스트: 입력 검증, 채점, 검색 토큰, 라우팅, 잘못된 ID, 데모 저장소, **샘플 2,050문제 무결성** | 없음 |
-| `npm run typecheck` | **타입 검사** (`tsc --noEmit`, 엄격 모드). 오류가 0개여야 합니다 | 없음 |
+| `npm run typecheck` | **타입 검사** (엄격 모드). 브라우저 코드(`tsconfig.json`)와 테스트·설정 코드(`tsconfig.node.json`)를 따로 검사합니다. 오류가 0개여야 합니다 | 없음 |
 | `npm run build` | 타입 검사 + 배포용 빌드(`dist/`) | 없음 |
 | `npm run test:rules` | Firestore/Storage **보안 규칙** 테스트 (에뮬레이터에서 실행) | Java 11+ |
 | `npm run test:e2e` | 실제 브라우저(Chromium) 테스트: 데모 모드 전체 흐름 + 샘플 41세트 끝까지 풀기(전부 정답·전부 오답·반반) + 설정 누락 화면 | Playwright |
@@ -253,7 +253,8 @@ npm run deploy        # = npm run build && firebase deploy --only hosting
 quiz-platform-ts/
 ├── index.html               # 페이지 뼈대 (헤더/본문/푸터)
 ├── package.json             # 명령어와 패키지 목록
-├── tsconfig.json            # TypeScript 설정 (strict)
+├── tsconfig.json            # TypeScript 설정: 브라우저 코드(src) — Node 전용 기능을 쓰면 오류
+├── tsconfig.node.json       # TypeScript 설정: 테스트·설정 파일 (Node)
 ├── vite.config.ts           # 개발 서버 설정
 ├── firebase.json            # Hosting(새로고침 대응 rewrites)·에뮬레이터 설정
 ├── firestore.rules          # Firestore 보안 규칙

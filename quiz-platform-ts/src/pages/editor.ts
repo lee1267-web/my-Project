@@ -121,13 +121,46 @@ function toSubmit(form: EditorState) {
 }
 
 // 임시 저장은 이 브라우저(localStorage)에만 합니다. 이미지 파일은 저장되지 않습니다.
+// 저장된 값은 예전 형식이거나 손상됐을 수 있으므로, 모양을 확인하고 화면 상태로 다시 정리해서 돌려줍니다.
 function readDraft(key: string): Draft | null {
+  let data: { savedAt?: unknown; form?: Record<string, unknown> } | null;
   try {
     const raw = localStorage.getItem(DRAFT_PREFIX + key);
-    return raw ? (JSON.parse(raw) as Draft) : null;
+    data = raw ? JSON.parse(raw) : null;
   } catch {
     return null;
   }
+  const f = data?.form;
+  if (!f || typeof f !== 'object' || !Array.isArray(f.questions)) return null;
+  const str = (v: unknown): string => (typeof v === 'string' ? v : '');
+  const questions = (f.questions as unknown[]).filter((q): q is Record<string, unknown> => !!q && typeof q === 'object').map((q): EditorQuestion => {
+    const type = q.type === 'choice' ? 'choice' : 'text';
+    const options = Array.isArray(q.options) ? q.options.map(str) : [];
+    return {
+      ...newQuestion(type),
+      id: str(q.id) || randomId(8),
+      question: str(q.question),
+      answer: str(q.answer),
+      altText: str(q.altText),
+      options: type === 'choice' ? (options.length >= 2 ? options : ['', '', '', '']) : [],
+      correctIndex: typeof q.correctIndex === 'number' && Number.isInteger(q.correctIndex) && q.correctIndex < options.length ? q.correctIndex : -1,
+      imageUrl: str(q.imageUrl),
+    };
+  });
+  return {
+    savedAt: str(data?.savedAt),
+    form: {
+      ...emptyForm(),
+      title: str(f.title),
+      description: str(f.description),
+      category: str(f.category),
+      subcategory: str(f.subcategory),
+      tagsText: str(f.tagsText),
+      isPublic: f.isPublic !== false,
+      imageUrl: str(f.imageUrl),
+      questions: questions.length ? questions : [newQuestion('text')],
+    },
+  };
 }
 function writeDraft(key: string, form: EditorState): void {
   const data: Draft = {
@@ -594,7 +627,8 @@ export async function render(container: HTMLElement, ctx: PageContext): Promise<
   const draftBanner = h('div', { class: 'container' });
   const draft = readDraft(draftKey);
   if (draft?.form) {
-    const when = new Date(draft.savedAt).toLocaleString('ko-KR');
+    const saved = new Date(draft.savedAt);
+    const when = Number.isNaN(saved.getTime()) ? '이전' : saved.toLocaleString('ko-KR');
     const box = h('div', { class: 'notice notice-info draft-notice', role: 'region', 'aria-label': '임시 저장본' },
       h('p', {}, `${when}에 임시 저장한 내용이 있어요.`),
       h('div', { class: 'notice-actions' },
