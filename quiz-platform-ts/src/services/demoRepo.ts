@@ -1,6 +1,6 @@
 // 데모 모드 저장소: Firebase 없이 "이 브라우저의 localStorage"에만 저장합니다.
 // ⚠️ 다른 브라우저·기기·시크릿 창과 공유되지 않습니다. (실제 공유는 Firebase 모드에서만 가능)
-// Firestore 저장소(firestoreRepo.js)와 같은 함수 이름/동작을 갖도록 만들었습니다.
+// Firestore 저장소(firestoreRepo.ts)와 같은 함수 이름/동작을 갖도록 만들었습니다.
 import { fromStored } from './quizModel.ts';
 import { randomId } from '../utils/ids.ts';
 import { AppError } from '../utils/errors.ts';

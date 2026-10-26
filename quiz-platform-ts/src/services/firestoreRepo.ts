@@ -14,7 +14,7 @@ const QUIZZES = 'quizzes';
 const DELETED = 'deletedQuizzes'; // 삭제 표시(묘비): 삭제된 퀴즈와 없는 퀴즈를 구분하기 위함
 
 const db = () => getFirebase().db;
-// 화면에 표시할 이미지 주소 허용 범위 (utils/safeUrl.js)
+// 화면에 표시할 이미지 주소 허용 범위 (utils/safeUrl.ts)
 const URL_OPTS = { emulator: USE_EMULATORS };
 
 export function newQuizId(): string {

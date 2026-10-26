@@ -64,7 +64,7 @@ function cleanStoredQuestion(q: unknown, index: number, urlOpts: UrlOptions): Qu
   };
 }
 
-// urlOpts: { demo, emulator } — 어떤 이미지 주소를 허용할지 (utils/safeUrl.js)
+// urlOpts: { demo, emulator } — 어떤 이미지 주소를 허용할지 (utils/safeUrl.ts)
 export function fromStored(id: string, input: object, urlOpts: UrlOptions = {}): Quiz {
   const data = input as Raw;
   // Firestore Timestamp(toDate 가 있음) 또는 ISO 문자열 → Date
