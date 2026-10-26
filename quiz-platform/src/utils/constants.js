@@ -43,6 +43,7 @@ export const CATEGORIES = [
       sub('rnb', 'R&B', ['알앤비']), sub('rock', '록·밴드', ['록', '락', '밴드']), sub('trot', '트로트', ['뽕짝']),
       sub('indie', '인디'), sub('ost', 'OST', ['오에스티', '드라마ost']), sub('pop', '팝송', ['팝', 'pop']),
       sub('folk', '동요·민요', ['동요', '민요', '전래동요']), sub('classical', '클래식', ['클래식음악']), sub('jazz', '재즈'),
+      sub('theory', '악기·음악 이론', ['악기', '국악기', '음악이론', '악보']),
     ],
   },
   {
@@ -70,11 +71,11 @@ export const CATEGORIES = [
   },
   {
     key: 'sports', label: '스포츠', emoji: '⚽', aliases: ['스포츠', '운동', '체육', 'sports'],
-    subs: [sub('soccer', '축구', ['풋볼']), sub('baseball', '야구'), sub('basketball', '농구'), sub('volleyball', '배구'), sub('olympics', '올림픽'), sub('golf', '골프'), sub('fight', '격투기', ['복싱', 'ufc'])],
+    subs: [sub('soccer', '축구', ['풋볼']), sub('baseball', '야구'), sub('basketball', '농구'), sub('volleyball', '배구'), sub('olympics', '올림픽'), sub('golf', '골프'), sub('fight', '격투기', ['복싱', 'ufc']), sub('rules', '경기 규칙', ['규칙', '룰', '스포츠규칙'])],
   },
   {
     key: 'science', label: '과학', emoji: '🔬', aliases: ['과학', '수학', '자연', 'science'],
-    subs: [sub('general', '과학 일반'), sub('physics', '물리'), sub('chemistry', '화학'), sub('biology', '생물'), sub('space', '우주·지구', ['우주', '지구과학']), sub('math', '수학'), sub('nature', '동물·자연', ['동물', '식물'])],
+    subs: [sub('general', '과학 일반'), sub('physics', '물리'), sub('chemistry', '화학'), sub('biology', '생물'), sub('space', '우주·지구', ['우주', '지구과학']), sub('math', '수학'), sub('nature', '동물·자연', ['동물', '식물']), sub('weather', '날씨·기후', ['날씨', '기후', '기상'])],
   },
   {
     key: 'geography', label: '지리', emoji: '🗺️', aliases: ['지리', '나라', '여행', '세계'],
@@ -82,7 +83,7 @@ export const CATEGORIES = [
   },
   {
     key: 'language', label: '언어', emoji: '📚', aliases: ['언어', '국어', '한국어', '말'],
-    subs: [sub('spelling', '맞춤법', ['띄어쓰기']), sub('idioms', '사자성어', ['고사성어']), sub('english', '영어', ['영단어', 'english']), sub('proverbs', '속담'), sub('slang', '신조어', ['줄임말']), sub('chosung', '초성 퀴즈', ['초성'])],
+    subs: [sub('spelling', '맞춤법', ['띄어쓰기']), sub('idioms', '사자성어', ['고사성어']), sub('english', '영어', ['영단어', 'english']), sub('proverbs', '속담'), sub('slang', '신조어', ['줄임말']), sub('chosung', '초성 퀴즈', ['초성']), sub('hanja', '한자', ['한문', '한자어'])],
   },
   {
     key: 'culture', label: '예술·문학', emoji: '🎨', aliases: ['예술', '문학', '미술', '책', '독서'],
@@ -97,8 +98,16 @@ export const CATEGORIES = [
     subs: [sub('money', '경제·금융', ['경제', '금융', '돈', '재테크']), sub('law', '법·정치', ['법', '정치', '헌법']), sub('job', '직업', ['진로'])],
   },
   {
+    key: 'health', label: '건강·의학', emoji: '🩺', aliases: ['건강', '의학', '병원', '질병', '영양'],
+    subs: [sub('medical', '의학 상식', ['의학', '질병', '병']), sub('nutrition', '영양·식품', ['영양', '식품', '비타민']), sub('firstaid', '응급처치', ['응급', '안전'])],
+  },
+  {
+    key: 'vehicle', label: '탈것·교통', emoji: '🚗', aliases: ['탈것', '교통', '자동차', '차', '기차', '비행기', '배'],
+    subs: [sub('car', '자동차', ['차', '전기차']), sub('transport', '기차·비행기·배', ['기차', '철도', '비행기', '항공', '배', '선박']), sub('traffic', '교통 안전', ['교통법규', '신호'])],
+  },
+  {
     key: 'etc', label: '기타', emoji: '🧩', aliases: ['기타'],
-    subs: [sub('celeb', '연예인'), sub('youtube', '유튜브·인터넷', ['유튜버', '밈']), sub('random', '아무거나')],
+    subs: [sub('celeb', '연예인'), sub('youtube', '유튜브·인터넷', ['유튜버', '밈']), sub('random', '아무거나'), sub('puzzle', '두뇌·퍼즐', ['퍼즐', '두뇌', '논리', '수열', '추리'])],
   },
 ];
 

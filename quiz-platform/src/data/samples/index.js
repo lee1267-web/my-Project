@@ -1,4 +1,4 @@
-// 샘플 퀴즈 목록 (54세트 × 50문제). 새 세트를 만들면 파일을 추가하고 아래 목록에 등록하세요.
+// 샘플 퀴즈 목록 (70세트 × 50문제). 새 세트를 만들면 파일을 추가하고 아래 목록에 등록하세요.
 // 이 파일은 필요할 때만 불러옵니다(첫 화면 로딩 속도 보호).
 import { makeOptionOrders, seededRandom, hashSeed } from '../../utils/shuffle.js';
 import history from './history.js';
@@ -55,6 +55,22 @@ import jobs from './jobs.js';
 import chosung from './chosung.js';
 import oxscience from './oxscience.js';
 import oxlife from './oxlife.js';
+import biology from './biology.js';
+import plants from './plants.js';
+import weather from './weather.js';
+import worldfood from './worldfood.js';
+import health from './health.js';
+import nutrition from './nutrition.js';
+import cars from './cars.js';
+import transport from './transport.js';
+import janime from './janime.js';
+import sportsrules from './sportsrules.js';
+import internet from './internet.js';
+import travel from './travel.js';
+import hanja from './hanja.js';
+import instruments from './instruments.js';
+import joseon from './joseon.js';
+import puzzle from './puzzle.js';
 
 const LIST = [
   history, worldhistory, general, science, capitals, koreageo, spelling, idioms, english, songs, ballad,
@@ -62,6 +78,8 @@ const LIST = [
   kfood, proverbs, flags, space, body, baseball, brands, nonsense, slang, worldgeo,
   people, physics, chemistry, basketball, pop, inventions, dinosaurs, boardgames, heritage, disney,
   literature, art, myth, philosophy, computer, coding, ai, economy, civics, jobs, chosung, oxscience, oxlife,
+  biology, plants, weather, worldfood, health, nutrition, cars, transport,
+  janime, sportsrules, internet, travel, hanja, instruments, joseon, puzzle,
 ];
 
 // 데모 모드에서 쓰는 고정 ID (영숫자 20자)

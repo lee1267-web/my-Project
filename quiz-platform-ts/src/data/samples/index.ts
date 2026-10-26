@@ -1,4 +1,4 @@
-// 샘플 퀴즈 목록 (54세트 × 50문제). 새 세트를 만들면 파일을 추가하고 아래 목록에 등록하세요.
+// 샘플 퀴즈 목록 (70세트 × 50문제). 새 세트를 만들면 파일을 추가하고 아래 목록에 등록하세요.
 // 이 파일은 필요할 때만 불러옵니다(첫 화면 로딩 속도 보호).
 import { makeOptionOrders, seededRandom, hashSeed } from '../../utils/shuffle.ts';
 import type { SampleQuestion, SampleSet } from './helpers.ts';
@@ -56,6 +56,22 @@ import jobs from './jobs.ts';
 import chosung from './chosung.ts';
 import oxscience from './oxscience.ts';
 import oxlife from './oxlife.ts';
+import biology from './biology.ts';
+import plants from './plants.ts';
+import weather from './weather.ts';
+import worldfood from './worldfood.ts';
+import health from './health.ts';
+import nutrition from './nutrition.ts';
+import cars from './cars.ts';
+import transport from './transport.ts';
+import janime from './janime.ts';
+import sportsrules from './sportsrules.ts';
+import internet from './internet.ts';
+import travel from './travel.ts';
+import hanja from './hanja.ts';
+import instruments from './instruments.ts';
+import joseon from './joseon.ts';
+import puzzle from './puzzle.ts';
 
 const LIST: SampleSet[] = [
   history, worldhistory, general, science, capitals, koreageo, spelling, idioms, english, songs, ballad,
@@ -63,6 +79,8 @@ const LIST: SampleSet[] = [
   kfood, proverbs, flags, space, body, baseball, brands, nonsense, slang, worldgeo,
   people, physics, chemistry, basketball, pop, inventions, dinosaurs, boardgames, heritage, disney,
   literature, art, myth, philosophy, computer, coding, ai, economy, civics, jobs, chosung, oxscience, oxlife,
+  biology, plants, weather, worldfood, health, nutrition, cars, transport,
+  janime, sportsrules, internet, travel, hanja, instruments, joseon, puzzle,
 ];
 
 // 데모 모드에서 쓰는 고정 ID (영숫자 20자)

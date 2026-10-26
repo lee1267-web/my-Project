@@ -181,6 +181,8 @@ main { flex: 1; outline: none; padding-bottom: 48px; }
 .thumb-culture { background: linear-gradient(135deg, #e599f7, #ae3ec9); }
 .thumb-tech { background: linear-gradient(135deg, #66d9e8, #1098ad); }
 .thumb-economy { background: linear-gradient(135deg, #ffe066, #f08c00); }
+.thumb-health { background: linear-gradient(135deg, #96f2d7, #0ca678); }
+.thumb-vehicle { background: linear-gradient(135deg, #bac8ff, #4263eb); }
 .thumb-etc { background: linear-gradient(135deg, #ced4da, #868e96); }
 
 /* 퀴즈 카드 */

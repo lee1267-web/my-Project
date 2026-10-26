@@ -95,6 +95,41 @@ describe('샘플 퀴즈 데이터 검사', () => {
     expect(leaks).toEqual([]);
   });
 
+  it('두뇌 퀴즈의 계산 문제 정답을 코드로 다시 계산해도 같다', () => {
+    const puzzle = SAMPLE_QUIZZES.find((s) => s.key === 'puzzle')!;
+    const answerOf = (start: string): string => {
+      const q = puzzle.questions.find((x) => x.question.startsWith(start));
+      expect(q, start).toBeTruthy();
+      return q!.answer;
+    };
+    const num = (v: string): number => Number(String(v).replace(/[^\d.]/g, ''));
+    const fact = (n: number): number => (n <= 1 ? 1 : n * fact(n - 1));
+    const comb = (n: number, k: number): number => fact(n) / (fact(k) * fact(n - k));
+    const stairs = (n: number): number => (n <= 2 ? n : stairs(n - 1) + stairs(n - 2));
+    const angle = (h: number, m: number): number => { const d = Math.abs(30 * h + 0.5 * m - 6 * m) % 360; return Math.min(d, 360 - d); };
+    const checks: [string, number][] = [
+      ['3, 6, 12, 24', 48], ['1, 2, 4, 7, 11, 16', 22], ['1, 2, 6, 24, 120', fact(6)], ['4, 7, 10, 13', 16],
+      ['1, 3, 6, 10, 15', 21], ['2, 3, 5, 7, 11, 13', 17], ['100, 50, 25', 12.5], ['1, 8, 27, 64', 5 ** 3],
+      ['2, 6, 12, 20, 30', 6 * 7], ['81, 27, 9, 3', 1], ['6시 정각', angle(6, 0)], ['3시 30분', angle(3, 30)],
+      ['하루(24시간)', 24 * 11 / 12], ['닭과 토끼', (28 - 2 * 10) / 2], ['형은 동생보다', (20 + 4) / 2],
+      ['사과 3개', (1500 / 3) * 7], ['어떤 수를 2배', (30 + 6) / 2], ['종이 한 장', 2 ** 3],
+      ['5명이 서로', comb(5, 2)], ['10팀이', comb(10, 2)], ['16팀이', 16 - 1], ['계단 10칸', stairs(10)],
+      ['A, B, C 세 사람', fact(3)], ['5명 중에서 반장', 5 * 4], ['5명 중에서 대표', comb(5, 2)],
+      ['곧은 길', (10 - 1) * 10], ['통나무를', (5 - 1) * 3], ['9시 정각부터', 60 / 5 + 1], ['연필 3다스', 3 * 12],
+      ['시속 60km로', 60 * 2.5], ['같은 길을', (2 * 60 * 40) / (60 + 40)], ['물 200g', (50 / 250) * 100],
+      ['원가 10,000원', 10000 * 1.2 * 0.9], ['정가에서 20%', Math.round((1 - 0.8 * 0.8) * 100)],
+      ['어떤 수에 3을', (26 - 5) / 3], ['7 + 7 ÷ 7', 7 + 7 / 7 + 7 * 7 - 7], ['2 + 3 × 4', 2 + 3 * 4],
+      ['1부터 시작해 2를', Math.ceil(Math.log2(1000))], ['1시간 동안 시계의 시침', 360 / 12],
+      ['1시간 동안 시계의 분침', 360], ['1 + 3 + 5 + 7 + 9', 1 + 3 + 5 + 7 + 9],
+    ];
+    for (const [start, value] of checks) expect(num(answerOf(start)), start).toBeCloseTo(value, 6);
+    // 요일: 수요일(3)에서 100일 뒤
+    expect(answerOf('오늘이 수요일')).toBe(['일', '월', '화', '수', '목', '금', '토'][(3 + 100) % 7] + '요일');
+    // 확률
+    expect(answerOf('주사위 두 개')).toBe('1/36');
+    expect(answerOf('동전 3개')).toBe(`1/${2 ** 3}`);
+  });
+
   it('서로 다른 세트에 같은 문제가 들어 있지 않다', () => {
     // 띄어쓰기·따옴표·괄호·물음표만 다른 경우도 같은 문제로 봄
     const key = (text: string) => text.replace(/[\s「」『』"'?.,()·]/g, '');
